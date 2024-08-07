@@ -318,22 +318,3 @@ extension (method: DecodedMethod)
       case _: DecodedMethod.SAMOrPartialFunctionConstructor => true
       case method: DecodedMethod.InlinedMethod => method.underlying.isGenerated
       case _ => false
-
-extension (field: DecodedField)
-  def isGenerated: Boolean =
-    field match
-      case field: DecodedField.ValDef => false
-      case field: DecodedField.ModuleVal => true
-      case field: DecodedField.LazyValOffset => true
-      case field: DecodedField.Outer => true
-      case field: DecodedField.SerialVersionUID => true
-      case field: DecodedField.Capture => true
-      case field: DecodedField.LazyValBitmap => true
-
-extension (variable: DecodedVariable)
-  def isGenerated: Boolean =
-    variable match
-      case variable: DecodedVariable.ValDef => false
-      case variable: DecodedVariable.CapturedVariable => true
-      case variable: DecodedVariable.This => true
-      case variable: DecodedVariable.AnyValThis => true

@@ -153,7 +153,7 @@ class BinaryDecoderStats extends BinaryDecoderSuite:
   test("org.log4s:log4s_3:1.10.0".ignore):
     val fetchOptions = FetchOptions(keepProvided = true)
     val decoder = initDecoder("org.log4s", "log4s_3", "1.10.0", fetchOptions)
-    decoder.assertDecode("org.log4s.Warn", "java.lang.String name()", "")
+    decoder.assertDecodeMethod("org.log4s.Warn", "java.lang.String name()", "")
 
   test("org.virtuslab.scala-cli:cli2_3:0.1.5".ignore):
     val fetchOptions = FetchOptions(keepProvided = true)

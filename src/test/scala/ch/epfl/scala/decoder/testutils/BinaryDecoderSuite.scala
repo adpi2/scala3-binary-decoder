@@ -41,12 +41,12 @@ trait BinaryDecoderSuite extends CommonFunSuite:
       val fields = decoder.classLoader.loadClass(className).declaredFields
       println(s"Available binary fields in $className are:\n" + fields.map(f => s"  " + formatField(f)).mkString("\n"))
 
-    def assertDecode(className: String, expected: String)(using munit.Location): Unit =
+    def assertDecodeClass(className: String, expected: String)(using munit.Location): Unit =
       val cls = decoder.classLoader.loadClass(className)
       val decodedClass = decoder.decode(cls)
       assertEquals(formatter.format(decodedClass), expected)
 
-    def assertDecode(className: String, method: String, expected: String, generated: Boolean = false)(using
+    def assertDecodeMethod(className: String, method: String, expected: String, generated: Boolean = false)(using
         munit.Location
     ): Unit =
       val binaryMethod = loadBinaryMethod(className, method)
@@ -54,28 +54,31 @@ trait BinaryDecoderSuite extends CommonFunSuite:
       assertEquals(formatter.format(decodedMethod), expected)
       assertEquals(decodedMethod.isGenerated, generated)
 
-    def assertDecodeField(className: String, field: String, expected: String, generated: Boolean = false)(using
+    def assertDecodeField(className: String, field: String, expected: String)(using
         munit.Location
     ): Unit =
       val binaryField: binary.Field = loadBinaryField(className, field)
       val decodedField = decoder.decode(binaryField)
       assertEquals(formatter.format(decodedField), expected)
-      assertEquals(decodedField.isGenerated, generated)
 
-    def assertDecodeVariable(
-        className: String,
-        method: String,
-        variable: String,
-        expected: String,
-        line: Int,
-        generated: Boolean = false
-    )(using
+    def assertDecodeVariable(className: String, method: String, variable: String, line: Int, expected: String)(using
         munit.Location
     ): Unit =
       val binaryVariable = loadBinaryVariable(className, method, variable)
       val decodedVariable = decoder.decode(binaryVariable, line)
       assertEquals(formatter.format(decodedVariable), expected)
-      assertEquals(decodedVariable.isGenerated, generated)
+
+    def assertNotFoundMethod(declaringType: String, javaSig: String)(using munit.Location): Unit =
+      val method = loadBinaryMethod(declaringType, javaSig)
+      intercept[NotFoundException](decoder.decode(method))
+
+    def assertAmbiguousField(className: String, field: String)(using munit.Location): Unit =
+      val binaryField: binary.Field = loadBinaryField(className, field)
+      intercept[AmbiguousException](decoder.decode(binaryField))
+
+    def assertNotFoundField(className: String, field: String)(using munit.Location): Unit =
+      val binaryField = loadBinaryField(className, field)
+      intercept[NotFoundException](decoder.decode(binaryField))
 
     def assertAmbiguousVariable(className: String, method: String, variable: String, line: Int)(using
         munit.Location
@@ -89,26 +92,11 @@ trait BinaryDecoderSuite extends CommonFunSuite:
       val binaryVariable = loadBinaryVariable(className, method, variable)
       intercept[NotFoundException](decoder.decode(binaryVariable, line))
 
-    def assertNoSuchElementVariable(className: String, method: String, variable: String)(using munit.Location): Unit =
-      intercept[NoSuchElementException](loadBinaryVariable(className, method, variable))
-
     def assertIgnoredVariable(className: String, method: String, variable: String, reason: String)(using
         munit.Location
     ): Unit =
       val binaryVariable = loadBinaryVariable(className, method, variable)
       intercept[IgnoredException](decoder.decode(binaryVariable, 0))
-
-    def assertAmbiguousField(className: String, field: String)(using munit.Location): Unit =
-      val binaryField: binary.Field = loadBinaryField(className, field)
-      intercept[AmbiguousException](decoder.decode(binaryField))
-
-    def assertNotFoundField(className: String, field: String)(using munit.Location): Unit =
-      val binaryField = loadBinaryField(className, field)
-      intercept[NotFoundException](decoder.decode(binaryField))
-
-    def assertNotFound(declaringType: String, javaSig: String)(using munit.Location): Unit =
-      val method = loadBinaryMethod(declaringType, javaSig)
-      intercept[NotFoundException](decoder.decode(method))
 
     def assertDecodeAllInClass(
         className: String
