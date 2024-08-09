@@ -7,6 +7,7 @@ import org.objectweb.asm
 import java.io.IOException
 import java.net.URLClassLoader
 import java.nio.file.Path
+import scala.collection.SeqMap
 
 class JavaReflectLoader(classLoader: ClassLoader, loadExtraInfo: Boolean) extends BinaryClassLoader:
   private val loadedClasses: mutable.Map[Class[?], JavaReflectClass] = mutable.Map.empty
@@ -57,7 +58,6 @@ class JavaReflectLoader(classLoader: ClassLoader, loadExtraInfo: Boolean) extend
             override def visitLabel(label: asm.Label): Unit =
               labels += label
             override def visitLineNumber(line: Int, start: asm.Label): Unit =
-              // println("line: " + (line) + " start: " + start + " sourceName: " + sourceName)
               labelLines += start -> line
             override def visitFieldInsn(opcode: Int, owner: String, name: String, descriptor: String): Unit =
               instructions += Instruction.Field(opcode, owner.replace('/', '.'), name, descriptor)
@@ -85,16 +85,15 @@ class JavaReflectLoader(classLoader: ClassLoader, loadExtraInfo: Boolean) extend
               allLines ++= labelLines.values
               val sourceLines = Option.when(sourceName.nonEmpty)(SourceLines(sourceName, labelLines.values.toSeq))
               var latestLine: Option[Int] = None
-              val labelsWithLines: mutable.Map[asm.Label, Int] = mutable.Map.empty
-              for label <- labels
-              do
+              val labelsAndLines = labels.toSeq.flatMap { label =>
                 latestLine = labelLines.get(label).orElse(latestLine)
-                latestLine.foreach(line => labelsWithLines += label -> line)
+                latestLine.map(label -> _)
+              }
               extraInfos += SignedName(name, descriptor) -> ExtraMethodInfo(
                 sourceLines,
                 instructions.toSeq,
                 variables.toSeq,
-                labelsWithLines.toMap
+                SeqMap(labelsAndLines*)
               )
     reader.accept(visitor, asm.Opcodes.ASM9)
     val sourceLines = Option.when(sourceName.nonEmpty)(SourceLines(sourceName, allLines.toSeq))

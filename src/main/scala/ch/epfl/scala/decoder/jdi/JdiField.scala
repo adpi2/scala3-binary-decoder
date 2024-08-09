@@ -4,7 +4,7 @@ import ch.epfl.scala.decoder.binary.*
 
 class JdiField(field: com.sun.jdi.Field) extends Field:
 
-  override def declaringClass: ClassType = JdiClass(field.declaringType())
+  override def declaringClass: BinaryClass = JdiClass(field.declaringType())
 
   override def isStatic: Boolean = field.isStatic()
 

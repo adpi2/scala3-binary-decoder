@@ -116,7 +116,7 @@ trait BinaryVariableDecoder(using Context, ThrowOrWarn):
       variable: binary.Variable
   ): Seq[DecodedVariable] =
     val decodedClassSym = variable.`type` match
-      case cls: binary.ClassType => decode(cls).classSymbol
+      case cls: binary.BinaryClass => decode(cls).classSymbol
       case _ => None
     for
       metTree <- decodedMethod.treeOpt.toSeq

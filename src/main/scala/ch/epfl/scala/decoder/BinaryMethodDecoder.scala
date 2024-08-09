@@ -117,7 +117,7 @@ trait BinaryMethodDecoder(using Context, ThrowOrWarn):
       names: Seq[String]
   ): Seq[DecodedMethod.SetterAccessor] =
     for
-      param <- method.allParameters.lastOption.toSeq
+      param <- method.parameters.lastOption.toSeq
       sym <- decodeFields(decodedClass, param.`type`, names)
     yield
       val tpe = MethodType(List(SimpleName("x$1")), List(sym.declaredType.asInstanceOf[Type]), defn.UnitType)
@@ -220,7 +220,7 @@ trait BinaryMethodDecoder(using Context, ThrowOrWarn):
       if method.instructions.isEmpty && method.isExtensionMethod then
         for
           companionClass <- decodedClass.companionClass.toSeq
-          param <- method.allParameters.lastOption.toSeq
+          param <- method.parameters.lastOption.toSeq
           sym <- decodeFields(companionClass, param.`type`, names.map(_.stripSuffix("$extension")))
         yield
           val decodedTarget = DecodedMethod.ValOrDefDef(decodedClass, sym)
@@ -307,7 +307,7 @@ trait BinaryMethodDecoder(using Context, ThrowOrWarn):
     method.instructions
       .collect {
         case binary.Instruction.Method(_, owner, name, descriptor, _) if owner == method.declaringClass.name =>
-          method.declaringClass.method(name, descriptor)
+          method.declaringClass.declaredMethod(name, descriptor)
       }
       .singleOpt
       .flatten
@@ -439,7 +439,7 @@ trait BinaryMethodDecoder(using Context, ThrowOrWarn):
   ): Option[DecodedMethod.MixinForwarder] =
     method.instructions
       .collect { case binary.Instruction.Method(_, owner, name, descriptor, _) =>
-        method.declaringClass.classLoader.loadClass(owner).method(name, descriptor)
+        method.declaringClass.classLoader.loadClass(owner).declaredMethod(name, descriptor)
       }
       .singleOpt
       .flatten
@@ -475,7 +475,7 @@ trait BinaryMethodDecoder(using Context, ThrowOrWarn):
     val candidates = decodeAnonFunsAndByNameArgs(decodedClass, method)
     if candidates.size > 1 then
       val clashingMethods = method.declaringClass.declaredMethods
-        .filter(m => m.returnType.zip(method.returnType).forall(_ == _) && m.signedName.name != method.signedName.name)
+        .filter(m => m.returnType.zip(method.returnType).forall(_ == _) && m.name != method.name)
         .collect { case m @ Patterns.AnonFun() if m.name != method.name => m }
         .map(m => m -> decodeAnonFunsAndByNameArgs(decodedClass, m).toSet)
         .toMap
@@ -498,7 +498,7 @@ trait BinaryMethodDecoder(using Context, ThrowOrWarn):
   ): Seq[DecodedMethod] =
     val anonFuns = decodeLocalMethods(decodedClass, method, Seq(CommonNames.anonFun.toString))
     val byNameArgs =
-      if method.allParameters.forall(_.isCapture) then decodeByNameArgs(decodedClass, method)
+      if method.parameters.forall(_.isCapturedParam) then decodeByNameArgs(decodedClass, method)
       else Seq.empty
     reduceAmbiguity(anonFuns ++ byNameArgs)
 
@@ -515,7 +515,7 @@ trait BinaryMethodDecoder(using Context, ThrowOrWarn):
   private def decodeByNameArgs(decodedClass: DecodedClass, method: binary.Method): Seq[DecodedMethod] =
     collectLiftedTrees(decodedClass, method) { case arg: ByNameArg if !arg.isInline => arg }
       .collect {
-        case arg if matchReturnType(arg.tpe, method.returnType) && matchCapture(arg.capture, method.allParameters) =>
+        case arg if matchReturnType(arg.tpe, method.returnType) && matchCapture(arg.capture, method.parameters) =>
           wrapIfInline(arg, DecodedMethod.ByNameArg(decodedClass, arg.owner, arg.tree, arg.tpe.asInstanceOf))
       }
 
@@ -523,7 +523,7 @@ trait BinaryMethodDecoder(using Context, ThrowOrWarn):
     val explicitByNameArgs =
       collectLiftedTrees(decodedClass, method) { case arg: ByNameArg if arg.isInline => arg }
         .collect {
-          case arg if matchReturnType(arg.tpe, method.returnType) && matchCapture(arg.capture, method.allParameters) =>
+          case arg if matchReturnType(arg.tpe, method.returnType) && matchCapture(arg.capture, method.parameters) =>
             wrapIfInline(arg, DecodedMethod.ByNameArg(decodedClass, arg.owner, arg.tree, arg.tpe.asInstanceOf))
         }
     val inlineOverrides =
@@ -608,8 +608,8 @@ trait BinaryMethodDecoder(using Context, ThrowOrWarn):
         ) && matchReturnType(sourceParams.returnType, binaryParams.returnType)
 
     (captureAllowed || binaryParams.capturedParams.isEmpty) &&
-    binaryParams.capturedParams.forall(_.isGenerated) &&
-    binaryParams.expandedParams.forall(_.isGenerated) &&
+    binaryParams.capturedParams.forall(_.isGeneratedParam) &&
+    binaryParams.expandedParams.forall(_.isGeneratedParam) &&
     sourceParams.regularParamTypes.size == binaryParams.regularParams.size &&
     (!checkParamNames || matchParamNames) &&
     (!checkTypeErasure || matchTypeErasure)
@@ -635,7 +635,7 @@ trait BinaryMethodDecoder(using Context, ThrowOrWarn):
   ): Seq[LiftedTree[S]] =
     val owners = withCompanionIfExtendsAnyVal(decodedClass)
     val sourceLines =
-      if owners.size == 2 && method.allParameters.exists(p => p.name.matches("\\$this\\$\\d+")) then
+      if owners.size == 2 && method.parameters.exists(p => p.name.matches("\\$this\\$\\d+")) then
         // workaround of https://github.com/lampepfl/dotty/issues/18816
         method.sourceLines.map(_.last)
       else method.sourceLines
@@ -694,7 +694,7 @@ trait BinaryMethodDecoder(using Context, ThrowOrWarn):
    */
   private def splitBinaryParams(method: binary.Method, sourceParams: SourceParams): BinaryParams =
     val (capturedParams, regularParams) =
-      method.allParameters.splitAt(method.allParameters.size - sourceParams.regularParamTypes.size)
+      method.parameters.splitAt(method.parameters.size - sourceParams.regularParamTypes.size)
     val (declaredParams, expandedParams) = regularParams.splitAt(sourceParams.declaredParamTypes.size)
     BinaryParams(capturedParams, declaredParams, expandedParams, method.returnType)
 

@@ -5,7 +5,7 @@ import scala.util.matching.Regex
 
 object Patterns:
   object LocalClass:
-    def unapply(cls: binary.ClassType): Option[(String, String, Option[String])] =
+    def unapply(cls: binary.BinaryClass): Option[(String, String, Option[String])] =
       val decodedClassName = NameTransformer.decode(cls.name.split('.').last)
       unapply(decodedClassName)
 
@@ -16,7 +16,7 @@ object Patterns:
         .map(xs => (xs(0), xs(1), Option(xs(2)).map(_.stripPrefix("$")).filter(_.nonEmpty)))
 
   object AnonClass:
-    def unapply(cls: binary.ClassType): Option[(String, Option[String])] =
+    def unapply(cls: binary.BinaryClass): Option[(String, Option[String])] =
       val decodedClassName = NameTransformer.decode(cls.name.split('.').last)
       unapply(decodedClassName)
 
@@ -26,7 +26,7 @@ object Patterns:
         .map(xs => (xs(0), Option(xs(1)).map(_.stripPrefix("$")).filter(_.nonEmpty)))
 
   object InnerClass:
-    def unapply(cls: binary.ClassType): Option[String] =
+    def unapply(cls: binary.BinaryClass): Option[String] =
       val decodedClassName = NameTransformer.decode(cls.name.split('.').last)
       "(.+)\\$(.+)".r
         .unapplySeq(decodedClassName)
@@ -73,7 +73,7 @@ object Patterns:
 
   object LocalLazyInit:
     def unapply(method: binary.Method): Option[Seq[String]] =
-      if method.isBridge || !method.allParameters.forall(_.isGenerated) then None
+      if method.isBridge || !method.parameters.forall(_.isGeneratedParam) then None
       else method.extractFromDecodedNames("""(.+)\$lzyINIT\d+\$(\d+)""".r)(_(0).stripSuffix("$"))
 
   object SuperArg:

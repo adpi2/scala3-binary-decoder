@@ -148,7 +148,9 @@ trait BinaryDecoderSuite extends CommonFunSuite:
         binaryMethod <- binaryClass.declaredMethods
         decodedMethod <- decoder.tryDecode(decodedClass, binaryMethod, methodCounter)
         binaryVariable <- binaryMethod.variables
-      do decoder.tryDecode(decodedMethod, binaryVariable, variableCounter)
+        sourceLines <- binaryVariable.sourceLines
+        line <- sourceLines.lines.headOption
+      do decoder.tryDecode(decodedMethod, binaryVariable, line, variableCounter)
       classCounter.printReport()
       methodCounter.printReport()
       fieldCounter.printReport()
@@ -188,7 +190,7 @@ trait BinaryDecoderSuite extends CommonFunSuite:
         .find(v => formatVariable(v) == variableName)
         .getOrElse(throw new NoSuchElementException(notFoundMessage))
 
-    private def tryDecode(cls: binary.ClassType, counter: Counter): Option[DecodedClass] =
+    private def tryDecode(cls: binary.BinaryClass, counter: Counter): Option[DecodedClass] =
       try
         val sym = decoder.decode(cls)
         counter.success += (cls -> sym)
@@ -233,9 +235,9 @@ trait BinaryDecoderSuite extends CommonFunSuite:
         case ignored: IgnoredException => counter.ignored += ignored
         case e => counter.throwables += (field -> e)
 
-    private def tryDecode(mtd: DecodedMethod, variable: binary.Variable, counter: Counter): Unit =
+    private def tryDecode(mtd: DecodedMethod, variable: binary.Variable, line: Int, counter: Counter): Unit =
       try
-        val decoded = decoder.decode(mtd, variable, variable.sourceLines.get.lines.head)
+        val decoded = decoder.decode(mtd, variable, line)
         counter.success += (variable -> decoded)
       catch
         case notFound: NotFoundException => counter.notFound += (variable -> notFound)
@@ -249,15 +251,16 @@ trait BinaryDecoderSuite extends CommonFunSuite:
       case f: binary.Field => s"\"${f.declaringClass}\", \"${formatField(f)}\""
       case m: binary.Method => s"\"${m.declaringClass.name}\", \"${formatMethod(m)}\""
       case v: binary.Variable =>
-        s"\"${v.declaringMethod.declaringClass.name}\",\n        \"${formatMethod(
-            v.declaringMethod
-          )}\",\n        \"${formatVariable(v)}\",\n        \"\",\n        ${v.sourceLines.get.lines.head}, "
-      // s"\"${v.showSpan}"
+        s"""|"${v.declaringMethod.declaringClass.name}",
+            |        "${formatMethod(v.declaringMethod)}",
+            |        "${formatVariable(v)}",
+            |        ${v.sourceLines.get.lines.head},
+            |""".stripMargin
       case cls => s"\"${cls.name}\""
 
   private def formatMethod(m: binary.Method): String =
     val returnType = m.returnType.map(_.name).get
-    val parameters = m.allParameters.map(p => p.`type`.name + " " + p.name).mkString(", ")
+    val parameters = m.parameters.map(p => p.`type`.name + " " + p.name).mkString(", ")
     s"$returnType ${m.name}($parameters)"
 
   private def formatField(f: binary.Field): String =
@@ -314,7 +317,7 @@ trait BinaryDecoderSuite extends CommonFunSuite:
 
     def printComparisionWithJavaFormatting(): Unit =
       def formatJavaStyle(m: binary.Method): String =
-        s"${m.declaringClass.name}.${m.name}(${m.allParameters.map(_.`type`.name).mkString(",")})"
+        s"${m.declaringClass.name}.${m.name}(${m.parameters.map(_.`type`.name).mkString(",")})"
 
       val formatted = success
         .collect { case (m: binary.Method, d: DecodedMethod) => (formatJavaStyle(m), formatter.format(d)) }

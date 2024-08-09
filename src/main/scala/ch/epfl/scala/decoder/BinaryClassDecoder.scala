@@ -10,7 +10,7 @@ import scala.util.matching.Regex
 trait BinaryClassDecoder(using Context, ThrowOrWarn):
   self: BinaryDecoder =>
 
-  def decode(cls: binary.ClassType): DecodedClass =
+  def decode(cls: binary.BinaryClass): DecodedClass =
     val javaParts = cls.name.split('.')
     val packageNames = javaParts.dropRight(1).toList.map(SimpleName.apply)
     val packageSym =
@@ -44,7 +44,7 @@ trait BinaryClassDecoder(using Context, ThrowOrWarn):
     else syms
 
   private def decodeLocalClasses(
-      javaClass: binary.ClassType,
+      javaClass: binary.BinaryClass,
       packageSym: PackageSymbol,
       declaringClassName: String,
       localClassName: String,

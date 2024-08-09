@@ -1,8 +1,9 @@
 package ch.epfl.scala.decoder.javareflect
 
-import java.lang.reflect.Method
-import java.lang.reflect.Constructor
 import ch.epfl.scala.decoder.binary.SignedName
+
+import java.lang.reflect.Constructor
+import java.lang.reflect.Method
 
 object JavaReflectUtils:
   val primitiveSigs = Map[Class[?], String](
@@ -17,14 +18,15 @@ object JavaReflectUtils:
     classOf[Unit] -> "V"
   )
 
-  def signature(method: Method): SignedName =
+  def signature(method: Method | Constructor[?]): SignedName =
+    val name = method match
+      case _: Constructor[?] => "<init>"
+      case m: Method => m.getName
     val params = method.getParameterTypes.map(signature)
-    val returnType = signature(method.getReturnType)
-    SignedName(method.getName, s"(${params.mkString})$returnType")
-
-  def signature(ctr: Constructor[?]): SignedName =
-    val params = ctr.getParameterTypes.map(signature)
-    SignedName("<init>", s"(${params.mkString})V")
+    val returnType = method match
+      case _: Constructor[?] => "V"
+      case m: Method => signature(m.getReturnType)
+    SignedName(name, s"(${params.mkString})$returnType")
 
   def signature(cls: Class[?]): String =
     if cls.isPrimitive then primitiveSigs(cls)

@@ -1,11 +1,11 @@
 package ch.epfl.scala.decoder.binary
 
-trait Parameter extends Symbol:
+trait Parameter extends Variable:
   def `type`: Type
 
-  def isThis: Boolean = name == "$this"
-  def isOuter: Boolean = name == "$outer"
-  def isCapture: Boolean = !name.matches("_\\$\\d+") && name.matches(".+\\$\\d+")
-  def isUnknownJavaArg: Boolean = name.matches("arg\\d+")
-  def isJavaLangEnumParam: Boolean = name == "_$name" || name == "_$ordinal"
-  def isGenerated: Boolean = isCapture || isOuter || isThis || isUnknownJavaArg || isJavaLangEnumParam
+  private[decoder] def isThisParam: Boolean = name == "$this"
+  private[decoder] def isOuterParam: Boolean = name == "$outer"
+  private[decoder] def isCapturedParam: Boolean = !name.matches("_\\$\\d+") && name.matches(".+\\$\\d+")
+  private[decoder] def isUnknownJavaParam: Boolean = name.matches("arg\\d+")
+  private[decoder] def isJavaLangEnumParam: Boolean = name == "_$name" || name == "_$ordinal"
+  private[decoder] def isGeneratedParam: Boolean = isCapturedParam || isOuterParam || isThisParam || isUnknownJavaParam || isJavaLangEnumParam

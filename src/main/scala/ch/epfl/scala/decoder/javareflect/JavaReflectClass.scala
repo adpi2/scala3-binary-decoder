@@ -3,9 +3,11 @@ package ch.epfl.scala.decoder.javareflect
 import ch.epfl.scala.decoder.binary
 import scala.util.matching.Regex
 import scala.jdk.CollectionConverters.*
+import java.lang.reflect.Method
+import java.lang.reflect.Constructor
 
 class JavaReflectClass(val cls: Class[?], extraInfo: ExtraClassInfo, override val classLoader: JavaReflectLoader)
-    extends binary.ClassType:
+    extends binary.BinaryClass:
   override def name: String = cls.getTypeName
   override def superclass = Option(cls.getSuperclass).map(classLoader.loadClass)
   override def interfaces = cls.getInterfaces.toList.map(classLoader.loadClass)
@@ -32,15 +34,13 @@ class JavaReflectClass(val cls: Class[?], extraInfo: ExtraClassInfo, override va
     if showSpan.isEmpty then cls.toString else s"$cls $showSpan"
 
   override def declaredMethods: Seq[binary.Method] =
-    cls.getDeclaredMethods.map { m =>
-      val sig = JavaReflectUtils.signature(m)
-      val methodInfo = extraInfo.getMethodInfo(sig)
-      JavaReflectMethod(m, sig, methodInfo, classLoader)
-    } ++ cls.getDeclaredConstructors.map { c =>
-      val sig = JavaReflectUtils.signature(c)
-      val methodInfo = extraInfo.getMethodInfo(sig)
-      JavaReflectConstructor(c, sig, methodInfo, classLoader)
-    }
+    cls.getDeclaredMethods
+      .++[Method | Constructor[?]](cls.getDeclaredConstructors)
+      .map { m =>
+        val sig = JavaReflectUtils.signature(m)
+        val methodInfo = extraInfo.getMethodInfo(sig)
+        JavaReflectMethod(m, sig, methodInfo, classLoader)
+      }
 
   override def declaredFields: Seq[binary.Field] =
     cls.getDeclaredFields().map(f => JavaReflectField(f, classLoader))

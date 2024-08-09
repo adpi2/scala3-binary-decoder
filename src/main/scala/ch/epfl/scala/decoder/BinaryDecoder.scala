@@ -23,7 +23,7 @@ object BinaryDecoder:
       private val methodCache: TrieMap[(String, binary.SignedName), DecodedMethod] = TrieMap.empty
       private val liftedTreesCache: TrieMap[Symbol, Seq[LiftedTree[?]]] = TrieMap.empty
 
-      override def decode(cls: binary.ClassType): DecodedClass =
+      override def decode(cls: binary.BinaryClass): DecodedClass =
         classCache.getOrElseUpdate(cls.name, super.decode(cls))
 
       override def decode(method: binary.Method): DecodedMethod =

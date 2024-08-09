@@ -43,7 +43,7 @@ class TestingDecoder(mainEntry: ClasspathEntry, val classLoader: BinaryClassLoad
     val binaryClass = classLoader.loadClass(cls)
     decode(binaryClass)
   def name: String = mainEntry.name
-  def allClasses: Seq[binary.ClassType] =
+  def allClasses: Seq[binary.BinaryClass] =
     def listClassNames(root: Path): Seq[String] =
       val classMatcher = root.getFileSystem.getPathMatcher("glob:**.class")
       Files

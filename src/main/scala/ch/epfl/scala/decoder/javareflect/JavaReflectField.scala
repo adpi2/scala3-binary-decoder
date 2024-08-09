@@ -10,7 +10,7 @@ class JavaReflectField(field: Field, loader: JavaReflectLoader) extends binary.F
 
   override def sourceLines: Option[binary.SourceLines] = None
 
-  override def declaringClass: binary.ClassType = loader.loadClass(field.getDeclaringClass)
+  override def declaringClass: binary.BinaryClass = loader.loadClass(field.getDeclaringClass)
 
   override def isStatic: Boolean = Modifier.isStatic(field.getModifiers)
 

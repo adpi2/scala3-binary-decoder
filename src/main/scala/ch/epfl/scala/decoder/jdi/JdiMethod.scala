@@ -11,17 +11,15 @@ class JdiMethod(method: com.sun.jdi.Method) extends Method:
 
   override def declaringClass: JdiClass = JdiClass(method.declaringType)
 
-  override def allParameters: Seq[Parameter] =
-    method.arguments.asScala.toSeq.map(JdiLocalVariable.apply(_))
+  override def parameters: Seq[Parameter] =
+    method.arguments.asScala.toSeq.map(JdiParameter.apply(_, method))
 
   override def variables: Seq[Variable] =
-    method.variables().asScala.toSeq.map(JdiVariable.apply(_, method))
+    method.variables.asScala.toSeq.map(JdiVariable.apply(_, method))
 
   override def returnType: Option[Type] =
     try Some(JdiType(method.returnType))
     catch case e: com.sun.jdi.ClassNotLoadedException => None
-
-  override def returnTypeName: String = method.returnTypeName
 
   override def isBridge: Boolean = method.isBridge
 

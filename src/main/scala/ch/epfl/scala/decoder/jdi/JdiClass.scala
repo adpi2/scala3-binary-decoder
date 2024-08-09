@@ -7,14 +7,14 @@ import scala.jdk.CollectionConverters.*
 import scala.util.control.NonFatal
 
 /* A class or interface */
-class JdiClass(ref: com.sun.jdi.ReferenceType) extends JdiType(ref) with ClassType:
+class JdiClass(ref: com.sun.jdi.ReferenceType) extends JdiType(ref) with BinaryClass:
   override def classLoader: BinaryClassLoader = JdiClassLoader(ref.classLoader)
 
-  override def superclass: Option[ClassType] = ref match
+  override def superclass: Option[BinaryClass] = ref match
     case cls: com.sun.jdi.ClassType => Some(JdiClass(cls.superclass))
     case _ => None
 
-  override def interfaces: Seq[ClassType] = ref match
+  override def interfaces: Seq[BinaryClass] = ref match
     case cls: com.sun.jdi.ClassType => cls.interfaces.asScala.toSeq.map(JdiClass.apply)
     case interface: com.sun.jdi.InterfaceType => interface.superinterfaces.asScala.toSeq.map(JdiClass.apply)
 
@@ -30,9 +30,9 @@ class JdiClass(ref: com.sun.jdi.ReferenceType) extends JdiType(ref) with ClassTy
 
   override def declaredMethods: Seq[Method] = ref.methods.asScala.map(JdiMethod(_)).toSeq
 
-  override def declaredField(name: String): Option[Field] = None
+  override def declaredField(name: String): Option[Field] = declaredFields.find(_.name == name)
 
-  override def declaredFields: Seq[Field] = Seq.empty
+  override def declaredFields: Seq[Field] = ref.fields.asScala.map(JdiField(_)).toSeq
 
   private[jdi] def constantPool: ConstantPool = ConstantPool(ref.constantPool)
 
