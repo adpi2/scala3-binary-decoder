@@ -1,14 +1,13 @@
 package ch.epfl.scala.decoder.internal
 
-import tastyquery.Trees.*
-import scala.collection.mutable
+import ch.epfl.scala.decoder.ThrowOrWarn
+import tastyquery.Contexts.*
 import tastyquery.Symbols.*
 import tastyquery.Traversers.*
-import tastyquery.Contexts.*
-import tastyquery.SourcePosition
+import tastyquery.Trees.*
 import tastyquery.Types.*
-import tastyquery.Traversers
-import ch.epfl.scala.decoder.ThrowOrWarn
+
+import scala.collection.mutable
 
 /**
  * Collect all trees that could be lifted by the compiler: local defs, lambdas, try clauses, by-name applications
@@ -16,11 +15,11 @@ import ch.epfl.scala.decoder.ThrowOrWarn
  * and compute the capture.
  */
 object LiftedTreeCollector:
-  def collect(sym: Symbol)(using Context, Definitions, ThrowOrWarn): Seq[LiftedTree[?]] =
+  def collect(sym: Symbol)(using Context, ThrowOrWarn): Seq[LiftedTree[?]] =
     val collector = LiftedTreeCollector(sym)
     sym.tree.toSeq.flatMap(collector.collect)
 
-class LiftedTreeCollector private (root: Symbol)(using Context, Definitions, ThrowOrWarn):
+class LiftedTreeCollector private (root: Symbol)(using Context, ThrowOrWarn):
   private val inlinedTrees = mutable.Map.empty[TermSymbol, Seq[LiftedTree[?]]]
   private var owner = root
 

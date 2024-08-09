@@ -1,13 +1,14 @@
 package ch.epfl.scala.decoder.internal
 
-import tastyquery.Trees.*
+import ch.epfl.scala.decoder.*
+import tastyquery.Contexts.*
 import tastyquery.SourcePosition
 import tastyquery.Symbols.*
-import tastyquery.Contexts.*
-import tastyquery.Types.*
 import tastyquery.Traversers.*
+import tastyquery.Trees.*
+import tastyquery.Types.*
+
 import scala.collection.mutable
-import ch.epfl.scala.decoder.*
 
 sealed trait LiftedTree[S]:
   def tree: Tree
@@ -54,12 +55,11 @@ final case class ByNameArg(owner: Symbol, tree: TermTree, paramTpe: TermType, is
   def symbol: Nothing = unexpected("no symbol for by name arg")
 
 final case class ConstructorArg(owner: ClassSymbol, tree: TermTree, paramTpe: TermType)(using
-    ctx: Context,
-    defn: Definitions
+    ctx: Context
 ) extends LiftedTree[Nothing]:
   def tpe: TermType =
     paramTpe match
-      case _: ByNameType => defn.Function0Type.appliedTo(tree.tpe.asInstanceOf[Type])
+      case _: ByNameType => Definitions.Function0Type.appliedTo(tree.tpe.asInstanceOf[Type])
       case _ => tree.tpe
 
   def symbol: Nothing = unexpected("no symbol for constructor arg")

@@ -1,23 +1,24 @@
 package ch.epfl.scala.decoder.internal
 
-import tastyquery.Contexts.Context
+import tastyquery.Contexts.*
 import tastyquery.Names.*
 import tastyquery.Types.*
 
-class Definitions(using ctx: Context):
-  export ctx.defn.*
+object Definitions:
+  def scalaRuntimePackage(using Context) = defn.scalaPackage.getPackageDecl(SimpleName("runtime")).get
+  def javaPackage(using Context) = defn.RootPackage.getPackageDecl(SimpleName("java")).get
+  def javaIoPackage(using Context) = javaPackage.getPackageDecl(SimpleName("io")).get
+  def javaLangInvokePackage(using Context) = defn.javaLangPackage.getPackageDecl(SimpleName("invoke")).get
 
-  val scalaRuntimePackage = scalaPackage.getPackageDecl(SimpleName("runtime")).get
-  val javaPackage = RootPackage.getPackageDecl(SimpleName("java")).get
-  val javaIoPackage = javaPackage.getPackageDecl(SimpleName("io")).get
-  val javaLangInvokePackage = javaLangPackage.getPackageDecl(SimpleName("invoke")).get
+  def PartialFunctionClass(using Context) = defn.scalaPackage.getDecl(typeName("PartialFunction")).get.asClass
+  def AbstractPartialFunctionClass(using Context) =
+    scalaRuntimePackage.getDecl(typeName("AbstractPartialFunction")).get.asClass
+  def SerializableClass(using Context) = javaIoPackage.getDecl(typeName("Serializable")).get.asClass
+  def javaLangEnumClass(using Context) = defn.javaLangPackage.getDecl(typeName("Enum")).get.asClass
 
-  val PartialFunctionClass = scalaPackage.getDecl(typeName("PartialFunction")).get.asClass
-  val AbstractPartialFunctionClass = scalaRuntimePackage.getDecl(typeName("AbstractPartialFunction")).get.asClass
-  val SerializableClass = javaIoPackage.getDecl(typeName("Serializable")).get.asClass
-  val javaLangEnumClass = javaLangPackage.getDecl(typeName("Enum")).get.asClass
+  def SerializedLambdaType(using Context): Type =
+    TypeRef(javaLangInvokePackage.packageRef, typeName("SerializedLambda"))
+  def DeserializeLambdaType(using Context) =
+    MethodType(List(SimpleName("arg0")), List(SerializedLambdaType), defn.ObjectType)
 
-  val SerializedLambdaType: Type = TypeRef(javaLangInvokePackage.packageRef, typeName("SerializedLambda"))
-  val DeserializeLambdaType = MethodType(List(SimpleName("arg0")), List(SerializedLambdaType), ObjectType)
-
-  val Function0Type = TypeRef(scalaPackage.packageRef, typeName("Function0"))
+  def Function0Type(using Context) = TypeRef(defn.scalaPackage.packageRef, typeName("Function0"))
