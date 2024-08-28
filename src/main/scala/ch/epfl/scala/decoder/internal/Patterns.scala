@@ -50,6 +50,11 @@ object Patterns:
       (!method.isBridge && !method.isStatic) &&
         "(.*)\\$\\$\\$outer".r.unapplySeq(NameTransformer.decode(method.name)).isDefined
 
+    def unapply(field: binary.Field): Boolean = field.name == "$outer"
+
+    def unapply(variable: binary.Variable): Boolean = variable.name == "$outer"
+  end Outer
+
   object AnonFun:
     def unapply(method: binary.Method): Boolean =
       !method.isBridge && "(.*)\\$anonfun\\$\\d+".r.unapplySeq(NameTransformer.decode(method.name)).isDefined
@@ -148,9 +153,6 @@ object Patterns:
     def unapply(field: binary.Field): Option[Int] =
       """OFFSET\$(?:_m_)?(\d+)""".r.unapplySeq(field.name).map(xs => xs(0).toInt)
 
-  object OuterField:
-    def unapply(field: binary.Field): Boolean = field.name == "$outer"
-
   object SerialVersionUID:
     def unapply(field: binary.Field): Boolean = field.name == "serialVersionUID"
 
@@ -162,17 +164,20 @@ object Patterns:
     def unapply(field: binary.Field): Option[Seq[String]] =
       field.extractFromDecodedNames("(.+)\\$\\d+".r)(xs => xs(0))
 
-  object LazyValBitmap:
-    def unapply(field: binary.Field): Option[String] =
-      "(.+)bitmap\\$\\d+".r.unapplySeq(field.decodedName).map(xs => xs(0))
+    def unapply(variable: binary.Variable): Option[String] =
+      "(.+)\\$\\d+".r.unapplySeq(variable.name).map(xs => xs(0))
+  end Capture
 
   object CapturedLzyVariable:
+    def unapply(field: binary.Field): Option[Seq[String]] =
+      field.extractFromDecodedNames("(.+)\\$lzy1\\$\\d+".r)(xs => xs(0))
+
     def unapply(variable: binary.Variable): Option[String] =
       "(.+)\\$lzy1\\$\\d+".r.unapplySeq(variable.name).map(xs => xs(0))
 
-  object CapturedVariable:
-    def unapply(variable: binary.Variable): Option[String] =
-      "(.+)\\$\\d+".r.unapplySeq(variable.name).map(xs => xs(0))
+  object LazyValBitmap:
+    def unapply(field: binary.Field): Option[String] =
+      "(.+)bitmap\\$\\d+".r.unapplySeq(field.decodedName).map(xs => xs(0))
 
   object CapturedTailLocalVariable:
     def unapply(variable: binary.Variable): Option[String] =

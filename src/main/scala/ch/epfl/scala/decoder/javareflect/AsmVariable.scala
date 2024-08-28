@@ -9,4 +9,4 @@ import ch.epfl.scala.decoder.binary.Variable
 class AsmVariable(val name: String, val `type`: Type, val declaringMethod: Method, val sourceLines: Option[SourceLines])
     extends Variable:
 
-  override def toString: String = s"$name: ${`type`.name}"
+  override def toString: String = s"${`type`.name} $name"

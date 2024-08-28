@@ -31,11 +31,7 @@ trait BinaryFieldDecoder(using Context, ThrowOrWarn):
           decodedClass.classSymbol.flatMap(_.moduleValue).map(DecodedField.ModuleVal(decodedClass, _)).toSeq
         case Patterns.Offset(nbr) =>
           Seq(DecodedField.LazyValOffset(decodedClass, nbr, defn.LongType))
-        case Patterns.OuterField() =>
-          decodedClass.symbolOpt
-            .flatMap(_.outerClass)
-            .map(outerClass => DecodedField.Outer(decodedClass, outerClass.selfType))
-            .toSeq
+        case Patterns.Outer() => decodeOuter(decodedClass)
         case Patterns.SerialVersionUID() =>
           Seq(DecodedField.SerialVersionUID(decodedClass, defn.LongType))
         case Patterns.LazyValBitmap(name) =>
@@ -49,17 +45,8 @@ trait BinaryFieldDecoder(using Context, ThrowOrWarn):
               case sym: TermSymbol if sym.isVal && !sym.isMethod => sym
             }
           yield DecodedField.Capture(decodedClass, sym)
-        case Patterns.Capture(names) =>
-          decodedClass.treeOpt.toSeq
-            .flatMap(CaptureCollector.collectCaptures)
-            .filter { captureSym =>
-              names.exists {
-                case Patterns.LazyVal(name) => name == captureSym.nameStr
-                case name => name == captureSym.nameStr
-              }
-            }
-            .map(DecodedField.Capture(decodedClass, _))
-
+        case Patterns.CapturedLzyVariable(names) => decodeCapture(decodedClass, names)
+        case Patterns.Capture(names) => decodeCapture(decodedClass, names)
         case _ if field.isStatic && decodedClass.isJava =>
           for
             owner <- decodedClass.companionClassSymbol.toSeq
@@ -75,6 +62,18 @@ trait BinaryFieldDecoder(using Context, ThrowOrWarn):
       }
     decodedFields.singleOrThrow(field)
   end decode
+
+  private def decodeOuter(decodedClass: DecodedClass): Seq[DecodedField] =
+    decodedClass.symbolOpt
+      .flatMap(_.outerClass)
+      .map(outerClass => DecodedField.Outer(decodedClass, outerClass.selfType))
+      .toSeq
+
+  private def decodeCapture(decodedClass: DecodedClass, names: Seq[String]): Seq[DecodedField] =
+    decodedClass.treeOpt.toSeq
+      .flatMap(CaptureCollector.collectCaptures)
+      .filter(captureSym => names.contains(captureSym.nameStr))
+      .map(DecodedField.Capture(decodedClass, _))
 
   private def withCompanionIfExtendsJavaLangEnum(decodedClass: DecodedClass): Seq[ClassSymbol] =
     decodedClass.classSymbol.toSeq.flatMap { cls =>

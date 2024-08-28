@@ -213,6 +213,9 @@ object DecodedVariable:
   final class This(val owner: DecodedMethod, val declaredType: Type) extends DecodedVariable:
     override def toString: String = s"This($owner, ${declaredType.showBasic})"
 
+  final class OuterParam(val owner: DecodedMethod, val declaredType: Type) extends DecodedVariable:
+    override def toString: String = s"OuterParam($owner, ${declaredType.showBasic})"
+
   final class AnyValThis(val owner: DecodedMethod, val symbol: TermSymbol) extends DecodedVariable:
     def declaredType: TypeOrMethodic = symbol.declaredType
     override def symbolOpt: Option[TermSymbol] = Some(symbol)

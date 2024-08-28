@@ -231,7 +231,7 @@ abstract class BinaryFieldDecoderTests(scalaVersion: ScalaVersion) extends Binar
     decoder.assertDecodeField("example.A", "java.lang.Object $1$$lzy1", "A.<anon>: (Int, Int)")
   }
 
-  test("outer field") {
+  test("outer field and param") {
     val source =
       """|package example
          |
@@ -251,7 +251,9 @@ abstract class BinaryFieldDecoderTests(scalaVersion: ScalaVersion) extends Binar
     val decoder = TestingDecoder(source, scalaVersion)
     decoder.assertDecodeField("example.A", "java.lang.Object example$A$$x", "A.x: T")
     decoder.assertDecodeField("example.A$B", "example.A $outer", "A.B.<outer>: A[T]")
+    decoder.assertDecodeVariable("example.A$B",  "void <init>(example.A $outer)", "example.A $outer", 5, "<outer>: A[T]")
     decoder.assertDecodeField("example.A$C$1", "example.A $outer", "A.bar.C.<outer>: A[T]")
+    decoder.assertDecodeVariable("example.A$C$1",  "void <init>(example.A $outer)", "example.A $outer", 10, "<outer>: A[T]")
   }
 
   test("intricated outer fields") {
@@ -287,6 +289,7 @@ abstract class BinaryFieldDecoderTests(scalaVersion: ScalaVersion) extends Binar
          |""".stripMargin
     val decoder = TestingDecoder(source, scalaVersion)
     decoder.assertDecodeField("example.A$B$1", "int x$2", "A.foo.B.x.<capture>: Int")
+    decoder.assertDecodeVariable("example.A$B$1", "void <init>(int x$3, example.A $outer)", "int x$3", 8, "x.<capture>: Int")
   }
 
   test("ambiguous indirect captures") {
@@ -323,11 +326,8 @@ abstract class BinaryFieldDecoderTests(scalaVersion: ScalaVersion) extends Binar
          |}
          |""".stripMargin
     val decoder = TestingDecoder(source, scalaVersion)
-    decoder.assertDecodeField(
-      "example.A$B$1",
-      "scala.runtime.LazyRef c$lzy1$3",
-      "A.foo.B.c.<capture>: C"
-    )
+    decoder.assertDecodeField("example.A$B$1", "scala.runtime.LazyRef c$lzy1$3", "A.foo.B.c.<capture>: C")
+    decoder.assertDecodeVariable("example.A$B$1", "void <init>(scala.runtime.LazyRef c$lzy1$4, example.A $outer)", "scala.runtime.LazyRef c$lzy1$4", 8, "c.<capture>: C")
   }
 
   test("local class capture") {
@@ -342,11 +342,8 @@ abstract class BinaryFieldDecoderTests(scalaVersion: ScalaVersion) extends Binar
          |}
          |""".stripMargin
     val decoder = TestingDecoder(source, scalaVersion)
-    decoder.assertDecodeField(
-      "example.Foo$A$1",
-      "java.lang.String x$1",
-      "Foo.foo.A.x.<capture>: String"
-    )
+    decoder.assertDecodeField("example.Foo$A$1", "java.lang.String x$1", "Foo.foo.A.x.<capture>: String")
+    decoder.assertDecodeVariable("example.Foo$A$1", "void <init>(java.lang.String x$2)", "java.lang.String x$2", 7, "x.<capture>: String")
   }
 
   test("captured value class") {

@@ -109,6 +109,7 @@ class StackTraceFormatter(using ThrowOrWarn):
       case variable: DecodedVariable.CapturedVariable => formatName(variable.symbol).dot("<capture>")
       case variable: DecodedVariable.This => "this"
       case variable: DecodedVariable.AnyValThis => formatName(variable.symbol)
+      case variable: DecodedVariable.OuterParam => "<outer>"
 
   private def formatName(method: DecodedMethod): String =
     method match

@@ -20,13 +20,18 @@ trait BinaryVariableDecoder(using Context, ThrowOrWarn):
       def orTryDecode(f: PartialFunction[binary.Variable, Seq[DecodedVariable]]): Seq[DecodedVariable] =
         if xs.nonEmpty then xs else f.applyOrElse(variable, _ => Seq.empty[DecodedVariable])
     val decodedVariables = tryDecode {
-      case Patterns.CapturedLzyVariable(name) => decodeCapturedLzyVariable(decodedMethod, name)
-      case Patterns.CapturedTailLocalVariable(name) => decodeCapturedVariable(decodedMethod, name)
-      case Patterns.CapturedVariable(name) => decodeCapturedVariable(decodedMethod, name)
+      case Patterns.CapturedLzyVariable(name) =>
+        if variable.declaringMethod.isConstructor then decodeClassCapture(decodedMethod, name)
+        else decodeCapturedLzyVariable(decodedMethod, name)
+      case Patterns.CapturedTailLocalVariable(name) => decodeMethodCapture(decodedMethod, name)
+      case Patterns.Capture(name) => 
+        if variable.declaringMethod.isConstructor then decodeClassCapture(decodedMethod, name)
+        else decodeMethodCapture(decodedMethod, name)
       case Patterns.This() => decodedMethod.owner.thisType.toSeq.map(DecodedVariable.This(decodedMethod, _))
       case Patterns.DollarThis() => decodeDollarThis(decodedMethod)
       case Patterns.Proxy(name) => decodeProxy(decodedMethod, name)
       case Patterns.InlinedThis() => decodeInlinedThis(decodedMethod, variable)
+      case Patterns.Outer() => decodeOuterParam(decodedMethod)
     }.orTryDecode { case _ =>
       decodedMethod match
         case decodedMethod: DecodedMethod.SAMOrPartialFunctionImpl =>
@@ -50,9 +55,9 @@ trait BinaryVariableDecoder(using Context, ThrowOrWarn):
         Seq(DecodedVariable.CapturedVariable(decodedMethod, m.symbol))
       case m: DecodedMethod.ValOrDefDef if m.symbol.nameStr == name =>
         Seq(DecodedVariable.CapturedVariable(decodedMethod, m.symbol))
-      case _ => decodeCapturedVariable(decodedMethod, name)
+      case _ => decodeMethodCapture(decodedMethod, name)
 
-  private def decodeCapturedVariable(decodedMethod: DecodedMethod, name: String): Seq[DecodedVariable] =
+  private def decodeMethodCapture(decodedMethod: DecodedMethod, name: String): Seq[DecodedVariable] =
     for
       metTree <- decodedMethod.treeOpt.toSeq
       sym <- CaptureCollector.collectCaptures(metTree)
@@ -125,6 +130,20 @@ trait BinaryVariableDecoder(using Context, ThrowOrWarn):
         localVar.sym == decodedClassSym
       }
     yield DecodedVariable.This(decodedMethod, decodedClassSym.thisType)
+  
+  private def decodeOuterParam(decodedMethod: DecodedMethod): Seq[DecodedVariable] =
+    decodedMethod
+      .owner
+      .symbolOpt
+      .flatMap(_.outerClass)
+      .map(outerClass => DecodedVariable.OuterParam(decodedMethod, outerClass.selfType))
+      .toSeq
+
+  private def decodeClassCapture(decodedMethod: DecodedMethod, name: String): Seq[DecodedVariable] =
+    decodedMethod.owner.treeOpt.toSeq
+      .flatMap(CaptureCollector.collectCaptures)
+      .filter(captureSym => name == captureSym.nameStr)
+      .map(DecodedVariable.CapturedVariable(decodedMethod, _))
 
   private def decodeDollarThis(
       decodedMethod: DecodedMethod
@@ -140,3 +159,5 @@ trait BinaryVariableDecoder(using Context, ThrowOrWarn):
             case sym: TermSymbol if sym.isVal && !sym.isMethod => sym
           }
         yield DecodedVariable.AnyValThis(decodedMethod, sym)
+
+  
