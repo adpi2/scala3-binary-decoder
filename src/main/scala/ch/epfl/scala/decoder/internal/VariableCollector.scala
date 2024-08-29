@@ -67,7 +67,7 @@ class VariableCollector()(using Context, ThrowOrWarn) extends TreeTraverser:
       private def addValDefOrBind(valDef: ValDef | Bind): Unit =
         val sym = valDef.symbol.asInstanceOf[TermSymbol]
         previousTree
-          .collectFirst { case tree: (Block | CaseDef | DefDef) => tree }
+          .collectFirst { case tree: (Block | CaseDef | DefDef | Template) => tree }
           .foreach { parentTree =>
             variables +=
               LocalVariable.ValDef(

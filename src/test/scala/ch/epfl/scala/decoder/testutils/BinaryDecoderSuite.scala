@@ -34,7 +34,9 @@ trait BinaryDecoderSuite extends CommonFunSuite:
     def showVariables(className: String, method: String): Unit =
       val variables = loadBinaryMethod(className, method).variables
       println(
-        s"Available binary variables in $method are:\n" + variables.map(f => s"  " + formatVariable(f)).mkString("\n")
+        s"Available binary variables in $method are:\n" + variables
+          .map(v => s"  " + formatVariable(v) + " " + v.showSpan)
+          .mkString("\n")
       )
 
     def showFields(className: String): Unit =
@@ -353,7 +355,8 @@ trait BinaryDecoderSuite extends CommonFunSuite:
     def printNotFound(n: Int) =
       notFound.take(n).foreach { case (s1, NotFoundException(s2, owner)) =>
         if s1 != s2 then println(s"${formatDebug(s1)} not found because of ${formatDebug(s2)}")
-        else println(s"- ${formatDebug(s1)} not found " + owner.map(o => s"in ${o.getClass.getSimpleName()}"))
+        else
+          println(s"- ${formatDebug(s1)} not found " + owner.map(o => s"in ${o.getClass.getSimpleName}").getOrElse(""))
         println("")
       }
 

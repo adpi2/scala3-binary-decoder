@@ -15,7 +15,7 @@ class BinaryDecoderStats extends BinaryDecoderSuite:
       expectedClasses = ExpectedCount(4426),
       expectedMethods = ExpectedCount(68421, ambiguous = 25, notFound = 33),
       expectedFields = ExpectedCount(12549, ambiguous = 23, notFound = 4),
-      expectedVariables = ExpectedCount(137053, ambiguous = 4930, notFound = 3431)
+      expectedVariables = ExpectedCount(137261, ambiguous = 4941, notFound = 3212)
     )
 
   test("scala3-compiler:3.0.2"):
@@ -24,7 +24,7 @@ class BinaryDecoderStats extends BinaryDecoderSuite:
       expectedClasses = ExpectedCount(3859, notFound = 3),
       expectedMethods = ExpectedCount(60762, ambiguous = 24, notFound = 163),
       expectedFields = ExpectedCount(10673, ambiguous = 19, notFound = 7),
-      expectedVariables = ExpectedCount(118628, ambiguous = 4323, notFound = 3029, throwables = 37)
+      expectedVariables = ExpectedCount(118766, ambiguous = 4347, notFound = 2868, throwables = 36)
     )
 
   test("io.github.vigoo:zio-aws-ec2_3:4.0.5 - slow".ignore):
@@ -53,7 +53,7 @@ class BinaryDecoderStats extends BinaryDecoderSuite:
       expectedClasses = ExpectedCount(245),
       expectedMethods = ExpectedCount(2755, notFound = 92),
       expectedFields = ExpectedCount(298),
-      expectedVariables = ExpectedCount(4772, ambiguous = 58, notFound = 51)
+      expectedVariables = ExpectedCount(4773, ambiguous = 58, notFound = 50)
     )
 
   test("org.clulab:processors-main_3:8.5.3".ignore):

@@ -79,6 +79,30 @@ abstract class BinaryVariableDecoderTests(scalaVersion: ScalaVersion) extends Bi
     decoder.assertDecodeVariable("example.A", "void foo(java.lang.String y)", "java.lang.String y", 5, "y: String")
   }
 
+  test("constructor parameters and variables") {
+    val source =
+      """|package example
+         |
+         |class A(x: Int):
+         |  private val y = {
+         |    val z = x * x
+         |    z
+         |  }
+         |
+         |  def this(x: Int, y: Int) =
+         |    this(x + y)
+         |    val z = x + y
+         |    println(z)
+         |""".stripMargin
+    val decoder = TestingDecoder(source, scalaVersion)
+    decoder.assertDecodeVariable("example.A", "void <init>(int x)", "int x", 3, "x: Int")
+    decoder.assertDecodeVariable("example.A", "void <init>(int x)", "int y", 6, "y: Int")
+    decoder.assertDecodeVariable("example.A", "void <init>(int x)", "int z", 7, "z: Int")
+    decoder.assertDecodeVariable("example.A", "void <init>(int x, int y)", "int x", 10, "x: Int")
+    decoder.assertDecodeVariable("example.A", "void <init>(int x, int y)", "int y", 10, "y: Int")
+    decoder.assertDecodeVariable("example.A", "void <init>(int x, int y)", "int z", 12, "z: Int")
+  }
+
   test("ambiguous local variables") {
     val source =
       """|package example

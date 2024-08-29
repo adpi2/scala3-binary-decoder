@@ -8,7 +8,7 @@ import java.lang.reflect.Modifier
 import org.objectweb.asm
 
 class JavaReflectMethod(
-    method:  Method | Constructor[?],
+    method: Method | Constructor[?],
     val signedName: binary.SignedName,
     extraInfos: ExtraMethodInfo,
     loader: JavaReflectLoader

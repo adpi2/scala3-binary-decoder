@@ -24,7 +24,7 @@ trait BinaryVariableDecoder(using Context, ThrowOrWarn):
         if variable.declaringMethod.isConstructor then decodeClassCapture(decodedMethod, name)
         else decodeCapturedLzyVariable(decodedMethod, name)
       case Patterns.CapturedTailLocalVariable(name) => decodeMethodCapture(decodedMethod, name)
-      case Patterns.Capture(name) => 
+      case Patterns.Capture(name) =>
         if variable.declaringMethod.isConstructor then decodeClassCapture(decodedMethod, name)
         else decodeMethodCapture(decodedMethod, name)
       case Patterns.This() => decodedMethod.owner.thisType.toSeq.map(DecodedVariable.This(decodedMethod, _))
@@ -45,7 +45,11 @@ trait BinaryVariableDecoder(using Context, ThrowOrWarn):
               )
             )
         case _: DecodedMethod.Bridge => ignore(variable, "Bridge method")
-        case _ => decodeValDef(decodedMethod, variable, sourceLine)
+        case _ =>
+          if variable.declaringMethod.isConstructor then
+            decodeValDef(decodedMethod, variable, sourceLine)
+              .orIfEmpty(decodeLocalValDefInConstructor(decodedMethod, variable, sourceLine))
+          else decodeValDef(decodedMethod, variable, sourceLine)
     }
     decodedVariables.singleOrThrow(variable, decodedMethod)
 
@@ -78,11 +82,19 @@ trait BinaryVariableDecoder(using Context, ThrowOrWarn):
       for
         tree <- decodedMethod.treeOpt.toSeq
         localVar <- VariableCollector.collectVariables(tree).toSeq
-        if variable.name == localVar.sym.nameStr &&
-          (decodedMethod.isGenerated || !variable.declaringMethod.sourceLines.exists(x =>
-            localVar.sourceFile.name.endsWith(x.sourceName)
-          ) || (localVar.startLine <= sourceLine && sourceLine <= localVar.endLine))
+        if variable.name == localVar.sym.nameStr && matchSourceLines(decodedMethod, variable, localVar, sourceLine)
       yield DecodedVariable.ValDef(decodedMethod, localVar.sym.asTerm)
+
+  private def decodeLocalValDefInConstructor(
+      decodedMethod: DecodedMethod,
+      variable: binary.Variable,
+      sourceLine: Int
+  ): Seq[DecodedVariable] =
+    for
+      tree <- decodedMethod.owner.treeOpt.toSeq
+      localVar <- VariableCollector.collectVariables(tree).toSeq
+      if variable.name == localVar.sym.nameStr && matchSourceLines(decodedMethod, variable, localVar, sourceLine)
+    yield DecodedVariable.ValDef(decodedMethod, localVar.sym.asTerm)
 
   private def decodeSAMOrPartialFun(
       decodedMethod: DecodedMethod,
@@ -103,23 +115,14 @@ trait BinaryVariableDecoder(using Context, ThrowOrWarn):
         if variable.name == localVar.sym.nameStr
       yield DecodedVariable.ValDef(decodedMethod, localVar.sym.asTerm)
 
-  private def unexpandedSymName(sym: Symbol): String =
-    "(.+)\\$\\w+".r.unapplySeq(sym.nameStr).map(xs => xs(0)).getOrElse(sym.nameStr)
-
-  private def decodeProxy(
-      decodedMethod: DecodedMethod,
-      name: String
-  ): Seq[DecodedVariable] =
+  private def decodeProxy(decodedMethod: DecodedMethod, name: String): Seq[DecodedVariable] =
     for
       metTree <- decodedMethod.treeOpt.toSeq
       localVar <- VariableCollector.collectVariables(metTree)
       if name == localVar.sym.nameStr
     yield DecodedVariable.ValDef(decodedMethod, localVar.sym.asTerm)
 
-  private def decodeInlinedThis(
-      decodedMethod: DecodedMethod,
-      variable: binary.Variable
-  ): Seq[DecodedVariable] =
+  private def decodeInlinedThis(decodedMethod: DecodedMethod, variable: binary.Variable): Seq[DecodedVariable] =
     val decodedClassSym = variable.`type` match
       case cls: binary.BinaryClass => decode(cls).classSymbol
       case _ => None
@@ -130,11 +133,9 @@ trait BinaryVariableDecoder(using Context, ThrowOrWarn):
         localVar.sym == decodedClassSym
       }
     yield DecodedVariable.This(decodedMethod, decodedClassSym.thisType)
-  
+
   private def decodeOuterParam(decodedMethod: DecodedMethod): Seq[DecodedVariable] =
-    decodedMethod
-      .owner
-      .symbolOpt
+    decodedMethod.owner.symbolOpt
       .flatMap(_.outerClass)
       .map(outerClass => DecodedVariable.OuterParam(decodedMethod, outerClass.selfType))
       .toSeq
@@ -145,9 +146,7 @@ trait BinaryVariableDecoder(using Context, ThrowOrWarn):
       .filter(captureSym => name == captureSym.nameStr)
       .map(DecodedVariable.CapturedVariable(decodedMethod, _))
 
-  private def decodeDollarThis(
-      decodedMethod: DecodedMethod
-  ): Seq[DecodedVariable] =
+  private def decodeDollarThis(decodedMethod: DecodedMethod): Seq[DecodedVariable] =
     decodedMethod match
       case _: DecodedMethod.TraitStaticForwarder =>
         decodedMethod.owner.thisType.toSeq.map(DecodedVariable.This(decodedMethod, _))
@@ -160,4 +159,12 @@ trait BinaryVariableDecoder(using Context, ThrowOrWarn):
           }
         yield DecodedVariable.AnyValThis(decodedMethod, sym)
 
-  
+  private def matchSourceLines(
+      decodedMethod: DecodedMethod,
+      variable: binary.Variable,
+      localVar: LocalVariable,
+      sourceLine: Int
+  ): Boolean =
+    decodedMethod.isGenerated ||
+      !variable.declaringMethod.sourceLines.exists(x => localVar.sourceFile.name.endsWith(x.sourceName)) ||
+      localVar.startLine <= sourceLine && sourceLine <= localVar.endLine
