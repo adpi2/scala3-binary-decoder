@@ -166,5 +166,6 @@ trait BinaryVariableDecoder(using Context, ThrowOrWarn):
       sourceLine: Int
   ): Boolean =
     decodedMethod.isGenerated ||
+      variable.declaringMethod.isConstructor ||
       !variable.declaringMethod.sourceLines.exists(x => localVar.sourceFile.name.endsWith(x.sourceName)) ||
       localVar.startLine <= sourceLine && sourceLine <= localVar.endLine

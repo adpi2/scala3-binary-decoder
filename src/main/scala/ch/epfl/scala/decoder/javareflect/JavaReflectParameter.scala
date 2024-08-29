@@ -13,4 +13,6 @@ class JavaReflectParameter(parameter: Parameter, val declaringMethod: binary.Met
 
   override def `type`: binary.Type = loader.loadClass(parameter.getType)
 
-  override def toString: String = parameter.toString
+  override def toString: String =
+    try parameter.toString
+    catch case _: java.lang.ArrayIndexOutOfBoundsException => parameter.getName

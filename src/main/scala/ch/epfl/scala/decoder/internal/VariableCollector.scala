@@ -42,6 +42,19 @@ class VariableCollector()(using Context, ThrowOrWarn) extends TreeTraverser:
     var previousTree: mutable.Stack[Tree] = mutable.Stack.empty
 
     object Traverser extends TreeTraverser:
+      def traverseDef(tree: Tree): Unit =
+        // traverse even if it's a DefDef or ClassDef
+        tree match
+          case tree: DefDef =>
+            previousTree.push(tree)
+            tree.paramLists.foreach(_.left.foreach(Traverser.traverse))
+            tree.rhs.foreach(Traverser.traverse)
+            previousTree.pop()
+          case tree: ClassDef =>
+            previousTree.push(tree)
+            Traverser.traverse(tree.rhs)
+            previousTree.pop()
+          case _ => Traverser.traverse(tree)
       override def traverse(tree: Tree): Unit =
         tree match
           case valDefOrBind: (ValDef | Bind) => addValDefOrBind(valDefOrBind)
@@ -49,7 +62,7 @@ class VariableCollector()(using Context, ThrowOrWarn) extends TreeTraverser:
 
         tree match
           case _: TypeTree => ()
-          // case _: DefDef => ()
+          case _: DefDef | ClassDef => ()
           case valDef: ValDef => traverse(valDef.rhs)
           case bind: Bind => traverse(bind.body)
           case InlineCall(inlineCall) =>
@@ -57,7 +70,7 @@ class VariableCollector()(using Context, ThrowOrWarn) extends TreeTraverser:
               inlinedVariables.getOrElseUpdate(inlineCall.symbol, collectInlineDef(inlineCall.symbol))
             variables ++= localVariables.map(LocalVariable.InlinedFromDef(_, inlineCall))
             previousTree.push(inlineCall.termRefTree)
-            super.traverse(inlineCall.termRefTree)
+            inlineCall.args.foreach(traverseDef)
             previousTree.pop()
           case _ =>
             previousTree.push(tree)
@@ -88,7 +101,7 @@ class VariableCollector()(using Context, ThrowOrWarn) extends TreeTraverser:
           if cls.pos.isUnknown then -1 else cls.pos.endLine + 1
         )
       )
-    Traverser.traverse(tree)
+    Traverser.traverseDef(tree)
     variables.toSet
   end collect
 

@@ -15,7 +15,7 @@ class BinaryDecoderStats extends BinaryDecoderSuite:
       expectedClasses = ExpectedCount(4426),
       expectedMethods = ExpectedCount(68421, ambiguous = 25, notFound = 33),
       expectedFields = ExpectedCount(12549, ambiguous = 23, notFound = 4),
-      expectedVariables = ExpectedCount(137261, ambiguous = 4941, notFound = 3212)
+      expectedVariables = ExpectedCount(137875, ambiguous = 4905, notFound = 2634)
     )
 
   test("scala3-compiler:3.0.2"):
@@ -24,7 +24,7 @@ class BinaryDecoderStats extends BinaryDecoderSuite:
       expectedClasses = ExpectedCount(3859, notFound = 3),
       expectedMethods = ExpectedCount(60762, ambiguous = 24, notFound = 163),
       expectedFields = ExpectedCount(10673, ambiguous = 19, notFound = 7),
-      expectedVariables = ExpectedCount(118766, ambiguous = 4347, notFound = 2868, throwables = 36)
+      expectedVariables = ExpectedCount(119391, ambiguous = 4306, notFound = 2320)
     )
 
   test("io.github.vigoo:zio-aws-ec2_3:4.0.5 - slow".ignore):
@@ -40,7 +40,7 @@ class BinaryDecoderStats extends BinaryDecoderSuite:
       expectedClasses = ExpectedCount(10),
       expectedMethods = ExpectedCount(218),
       expectedFields = ExpectedCount(45),
-      expectedVariables = ExpectedCount(195, ambiguous = 1, notFound = 51)
+      expectedVariables = ExpectedCount(195, notFound = 52)
     )
 
   test("net.zygfryd:jackshaft_3:0.2.2".ignore):
@@ -53,7 +53,7 @@ class BinaryDecoderStats extends BinaryDecoderSuite:
       expectedClasses = ExpectedCount(245),
       expectedMethods = ExpectedCount(2755, notFound = 92),
       expectedFields = ExpectedCount(298),
-      expectedVariables = ExpectedCount(4773, ambiguous = 58, notFound = 50)
+      expectedVariables = ExpectedCount(4785, ambiguous = 58, notFound = 38)
     )
 
   test("org.clulab:processors-main_3:8.5.3".ignore):
@@ -71,7 +71,7 @@ class BinaryDecoderStats extends BinaryDecoderSuite:
       ExpectedCount(27),
       ExpectedCount(174, notFound = 2),
       expectedFields = ExpectedCount(20, ambiguous = 4),
-      expectedVariables = ExpectedCount(286, ambiguous = 3, notFound = 11)
+      expectedVariables = ExpectedCount(291, ambiguous = 3, notFound = 6)
     )
 
   test("com.zengularity:benji-google_3:2.2.1".ignore):
@@ -102,7 +102,7 @@ class BinaryDecoderStats extends BinaryDecoderSuite:
       ExpectedCount(149, notFound = 9),
       ExpectedCount(3546, notFound = 59),
       expectedFields = ExpectedCount(144, notFound = 2),
-      expectedVariables = ExpectedCount(14865, ambiguous = 273, notFound = 104)
+      expectedVariables = ExpectedCount(15127, ambiguous = 18, notFound = 97)
     )
 
   test("com.evolution:scache_3:5.1.2"):
@@ -114,7 +114,7 @@ class BinaryDecoderStats extends BinaryDecoderSuite:
       ExpectedCount(105),
       ExpectedCount(1509),
       expectedFields = ExpectedCount(161),
-      expectedVariables = ExpectedCount(3291, ambiguous = 51, notFound = 37)
+      expectedVariables = ExpectedCount(3310, ambiguous = 36, notFound = 33)
     )
 
   test("com.github.j5ik2o:docker-controller-scala-dynamodb-local_:1.15.34"):
@@ -126,7 +126,7 @@ class BinaryDecoderStats extends BinaryDecoderSuite:
       ExpectedCount(2),
       ExpectedCount(37),
       expectedFields = ExpectedCount(5),
-      expectedVariables = ExpectedCount(32, notFound = 7)
+      expectedVariables = ExpectedCount(39)
     )
 
   test("eu.ostrzyciel.jelly:jelly-grpc_3:0.5.3"):
@@ -136,7 +136,7 @@ class BinaryDecoderStats extends BinaryDecoderSuite:
       ExpectedCount(24),
       ExpectedCount(353),
       expectedFields = ExpectedCount(61),
-      expectedVariables = ExpectedCount(474, ambiguous = 3, notFound = 5)
+      expectedVariables = ExpectedCount(477, ambiguous = 3, notFound = 2)
     )
 
   test("com.devsisters:zio-agones_3:0.1.0"):
@@ -147,7 +147,7 @@ class BinaryDecoderStats extends BinaryDecoderSuite:
       ExpectedCount(83, notFound = 26),
       ExpectedCount(2804, ambiguous = 2, notFound = 5),
       expectedFields = ExpectedCount(258),
-      expectedVariables = ExpectedCount(3785, ambiguous = 17, notFound = 89, throwables = 48)
+      expectedVariables = ExpectedCount(3845, ambiguous = 17, notFound = 31, throwables = 46)
     )
 
   test("org.log4s:log4s_3:1.10.0".ignore):
@@ -175,7 +175,7 @@ class BinaryDecoderStats extends BinaryDecoderSuite:
       ExpectedCount(19),
       ExpectedCount(158),
       expectedFields = ExpectedCount(32, ambiguous = 4, notFound = 2),
-      expectedVariables = ExpectedCount(237, notFound = 4)
+      expectedVariables = ExpectedCount(239, notFound = 2)
     )
 
   test("io.github.valdemargr:gql-core_3:0.3.3"):
@@ -184,5 +184,5 @@ class BinaryDecoderStats extends BinaryDecoderSuite:
       ExpectedCount(531),
       ExpectedCount(7267, ambiguous = 4, notFound = 1),
       expectedFields = ExpectedCount(851, notFound = 2),
-      expectedVariables = ExpectedCount(15432, ambiguous = 313, notFound = 201)
+      expectedVariables = ExpectedCount(15713, ambiguous = 205, notFound = 28)
     )

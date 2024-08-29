@@ -405,3 +405,10 @@ abstract class BinaryVariableDecoderTests(scalaVersion: ScalaVersion) extends Bi
       128,
       "ex: Break[T]"
     )
+    decoder.assertDecodeVariable(
+      "org.scalajs.ir.VersionChecks",
+      "void <init>(java.lang.String current, java.lang.String binaryEmitted)",
+      "java.lang.String current",
+      26,
+      "current: String"
+    )
