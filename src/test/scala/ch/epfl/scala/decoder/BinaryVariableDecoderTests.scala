@@ -103,6 +103,90 @@ abstract class BinaryVariableDecoderTests(scalaVersion: ScalaVersion) extends Bi
     decoder.assertDecodeVariable("example.A", "void <init>(int x, int y)", "int z", 12, "z: Int")
   }
 
+  test("contextual parameters") {
+    val source =
+      """|package example
+         |
+         |class A:
+         |  def m(x: Int): String ?=> String = ???
+         |  def m(): (Int, String) ?=> Int = ???
+         |  def m(x: String): Int ?=> String ?=> String = ???
+         |""".stripMargin
+    val decoder = TestingDecoder(source, scalaVersion)
+    if isScala33 then
+      decoder.assertDecodeVariable(
+        "example.A",
+        "java.lang.String m(int x, java.lang.String evidence$1)",
+        "java.lang.String evidence$1",
+        4,
+        "<anon>: String"
+      )
+      decoder.assertDecodeVariable(
+        "example.A",
+        "int m(int evidence$2, java.lang.String evidence$3)",
+        "int evidence$2",
+        5,
+        "<anon>: Int"
+      )
+      decoder.assertDecodeVariable(
+        "example.A",
+        "int m(int evidence$2, java.lang.String evidence$3)",
+        "java.lang.String evidence$3",
+        5,
+        "<anon>: String"
+      )
+      decoder.assertDecodeVariable(
+        "example.A",
+        "java.lang.String m(java.lang.String x, int evidence$4, java.lang.String evidence$5)",
+        "int evidence$4",
+        6,
+        "<anon>: Int"
+      )
+      decoder.assertDecodeVariable(
+        "example.A",
+        "java.lang.String m(java.lang.String x, int evidence$4, java.lang.String evidence$5)",
+        "java.lang.String evidence$5",
+        6,
+        "<anon>: String"
+      )
+    else
+      decoder.assertDecodeVariable(
+        "example.A",
+        "java.lang.String m(int x, java.lang.String contextual$1)",
+        "java.lang.String contextual$1",
+        4,
+        "<anon>: String"
+      )
+      decoder.assertDecodeVariable(
+        "example.A",
+        "int m(int contextual$2, java.lang.String contextual$3)",
+        "int contextual$2",
+        5,
+        "<anon>: Int"
+      )
+      decoder.assertDecodeVariable(
+        "example.A",
+        "int m(int contextual$2, java.lang.String contextual$3)",
+        "java.lang.String contextual$3",
+        5,
+        "<anon>: String"
+      )
+      decoder.assertDecodeVariable(
+        "example.A",
+        "java.lang.String m(java.lang.String x, int contextual$4, java.lang.String contextual$5)",
+        "int contextual$4",
+        6,
+        "<anon>: Int"
+      )
+      decoder.assertDecodeVariable(
+        "example.A",
+        "java.lang.String m(java.lang.String x, int contextual$4, java.lang.String contextual$5)",
+        "java.lang.String contextual$5",
+        6,
+        "<anon>: String"
+      )
+  }
+
   test("ambiguous local variables") {
     val source =
       """|package example
@@ -411,4 +495,11 @@ abstract class BinaryVariableDecoderTests(scalaVersion: ScalaVersion) extends Bi
       "java.lang.String current",
       26,
       "current: String"
+    )
+    decoder.assertDecodeVariable(
+      "scala.quoted.runtime.impl.QuoteMatcher$",
+      "scala.collection.immutable.Seq $eq$qmark$eq(dotty.tools.dotc.ast.Trees$Tree scrutinee0, dotty.tools.dotc.ast.Trees$Tree pattern0, scala.collection.immutable.Map x$3, dotty.tools.dotc.core.Contexts$Context x$4, scala.util.boundary$Label evidence$4)",
+      "dotty.tools.dotc.ast.Trees$Tree s",
+      192,
+      "s: Tree[Types.Type]"
     )

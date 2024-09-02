@@ -1,18 +1,20 @@
 package ch.epfl.scala.decoder.internal
 
-import tastyquery.Symbols.*
-import tastyquery.Trees.*
-import tastyquery.Names.*
-import tastyquery.Types.*
-import tastyquery.Modifiers.*
 import ch.epfl.scala.decoder.*
 import ch.epfl.scala.decoder.binary
-import tastyquery.SourcePosition
-import tastyquery.Contexts.*
-import tastyquery.Signatures.*
-import scala.util.control.NonFatal
-import tastyquery.SourceLanguage
 import ch.epfl.scala.decoder.binary.SourceLines
+import tastyquery.Contexts.*
+import tastyquery.Modifiers.*
+import tastyquery.Names.*
+import tastyquery.Signatures.*
+import tastyquery.SourceLanguage
+import tastyquery.SourcePosition
+import tastyquery.Symbols.*
+import tastyquery.Trees.*
+import tastyquery.Types.*
+
+import scala.annotation.tailrec
+import scala.util.control.NonFatal
 
 extension (symbol: Symbol)
   def isTrait = symbol.isClass && symbol.asClass.isTrait
@@ -89,15 +91,14 @@ extension [A, S[+X] <: IterableOnce[X]](xs: S[A])
     if xs.nonEmpty then xs else ys
 
 extension [T <: DecodedSymbol](xs: Seq[T])
-  def singleOrThrow(symbol: binary.Symbol): T =
+  inline def singleOrThrow(symbol: binary.Symbol): T =
     singleOptOrThrow(symbol).getOrElse(notFound(symbol))
 
-  def singleOrThrow(symbol: binary.Symbol, decodedOwner: DecodedSymbol): T =
+  inline def singleOrThrow(symbol: binary.Symbol, decodedOwner: DecodedSymbol): T =
     singleOptOrThrow(symbol).getOrElse(notFound(symbol, Some(decodedOwner)))
 
-  def singleOptOrThrow(symbol: binary.Symbol): Option[T] =
-    if xs.size > 1 then ambiguous(symbol, xs)
-    else xs.headOption
+  inline def singleOptOrThrow(symbol: binary.Symbol): Option[T] =
+    if xs.size > 1 then ambiguous(symbol, xs) else xs.headOption
 
 extension (name: TermName)
   def isPackageObject: Boolean =
@@ -143,6 +144,15 @@ extension (tpe: Type)
       case tpe: RepeatedType if asJavaVarargs =>
         ctx.defn.ArrayTypeOf(tpe.elemType).erased(isReturnType = false)
       case _ => tpe.erased(isReturnType = false)
+
+  def expandContextFunctions(using Context, ThrowOrWarn): (List[Type], Type) =
+    @tailrec def rec(tpe: Type, acc: List[Type]): (List[Type], Type) =
+      tpe.safeDealias match
+        case Some(tpe: AppliedType) if tpe.tycon.isContextFunction =>
+          val argsAsTypes = tpe.args.map(_.highIfWildcard)
+          rec(argsAsTypes.last, acc ::: argsAsTypes.init)
+        case _ => (acc, tpe)
+    rec(tpe, List.empty)
 
   private def erased(isReturnType: Boolean)(using Context, ThrowOrWarn): Option[ErasedTypeRef] =
     tryOrNone(ErasedTypeRef.erase(tpe, SourceLanguage.Scala3, keepUnit = isReturnType))

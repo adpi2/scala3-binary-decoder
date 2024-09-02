@@ -13,12 +13,12 @@ case class IgnoredException(symbol: binary.Symbol, reason: String)
 
 case class UnexpectedException(message: String) extends Exception(message)
 
-def notFound(symbol: binary.Symbol, decodedOwner: Option[DecodedSymbol] = None): Nothing =
-  throw NotFoundException(symbol, decodedOwner)
+inline def notFound(symbol: binary.Symbol, decodedOwner: Option[DecodedSymbol] = None): Nothing =
+  throw new NotFoundException(symbol, decodedOwner)
 
-def ambiguous(symbol: binary.Symbol, candidates: Seq[DecodedSymbol]): Nothing =
-  throw AmbiguousException(symbol, candidates)
+inline def ambiguous(symbol: binary.Symbol, candidates: Seq[DecodedSymbol]): Nothing =
+  throw new AmbiguousException(symbol, candidates)
 
-def ignore(symbol: binary.Symbol, reason: String): Nothing = throw IgnoredException(symbol, reason)
+inline def ignore(symbol: binary.Symbol, reason: String): Nothing = throw new IgnoredException(symbol, reason)
 
-def unexpected(message: String): Nothing = throw UnexpectedException(message)
+inline def unexpected(message: String): Nothing = throw new UnexpectedException(message)

@@ -14,8 +14,6 @@ class StackTraceFormatter(using ThrowOrWarn):
     val typeAscription = variable.declaredType match
       case tpe: Type => ": " + format(tpe)
       case tpe => format(tpe)
-    val test1 = formatOwner(variable)
-    val test2 = formatName(variable)
     formatName(variable) + typeAscription
 
   def formatMethodSignatures(input: String): String = {

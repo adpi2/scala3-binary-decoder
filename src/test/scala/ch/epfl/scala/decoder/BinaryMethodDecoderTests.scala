@@ -1085,33 +1085,46 @@ abstract class BinaryMethodDecoderTests(scalaVersion: ScalaVersion) extends Bina
          |  def m(x: String): Int ?=> String ?=> String = ???
          |""".stripMargin
     val decoder = TestingDecoder(source, scalaVersion)
-    decoder.assertDecodeMethod(
-      "example.A",
-      if isScala33 then "java.lang.String m(int x, java.lang.String evidence$1)"
-      else "java.lang.String m(int x, java.lang.String contextual$1)",
-      "A.m(x: Int): String ?=> String"
-    )
-    decoder.assertDecodeMethod(
-      "example.A",
-      if isScala33 then "int m(int evidence$2, java.lang.String evidence$3)"
-      else "int m(int contextual$2, java.lang.String contextual$3)",
-      "A.m(): (Int, String) ?=> Int"
-    )
-    decoder.assertDecodeMethod(
-      "example.A",
-      if isScala33 then "java.lang.String m(java.lang.String x, int evidence$4, java.lang.String evidence$5)"
-      else "java.lang.String m(java.lang.String x, int contextual$4, java.lang.String contextual$5)",
-      "A.m(x: String): Int ?=> String ?=> String"
-    )
-    if isScala34 then
-      val source =
+    if isScala33 then
+      decoder.assertDecodeMethod(
+        "example.A",
+        "java.lang.String m(int x, java.lang.String evidence$1)",
+        "A.m(x: Int): String ?=> String"
+      )
+      decoder.assertDecodeMethod(
+        "example.A",
+        "int m(int evidence$2, java.lang.String evidence$3)",
+        "A.m(): (Int, String) ?=> Int"
+      )
+      decoder.assertDecodeMethod(
+        "example.A",
+        "java.lang.String m(java.lang.String x, int evidence$4, java.lang.String evidence$5)",
+        "A.m(x: String): Int ?=> String ?=> String"
+      )
+    else
+      decoder.assertDecodeMethod(
+        "example.A",
+        "java.lang.String m(int x, java.lang.String contextual$1)",
+        "A.m(x: Int): String ?=> String"
+      )
+      decoder.assertDecodeMethod(
+        "example.A",
+        "int m(int contextual$2, java.lang.String contextual$3)",
+        "A.m(): (Int, String) ?=> Int"
+      )
+      decoder.assertDecodeMethod(
+        "example.A",
+        "java.lang.String m(java.lang.String x, int contextual$4, java.lang.String contextual$5)",
+        "A.m(x: String): Int ?=> String ?=> String"
+      )
+      val source2 =
         """|package example
            |
            |class A:
            |  def mbis: ? ?=> String = ???
            |""".stripMargin
-      val decoder = TestingDecoder(source, scalaVersion)
-      decoder.assertDecodeMethod(
+      val decoder2 = TestingDecoder(source, scalaVersion)
+      decoder2.assertDecodeMethod(
         "example.A",
         "java.lang.String mbis(java.lang.Object contextual$1)",
         "A.mbis: ? ?=> String"

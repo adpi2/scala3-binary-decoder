@@ -48,7 +48,13 @@ class VariableCollector()(using Context, ThrowOrWarn) extends TreeTraverser:
           case tree: DefDef =>
             previousTree.push(tree)
             tree.paramLists.foreach(_.left.foreach(Traverser.traverse))
-            tree.rhs.foreach(Traverser.traverse)
+            val isContextFun = tree.symbol.declaredType.returnType.safeDealias.exists(_.isContextFunction)
+            tree.rhs match
+              case Some(Block(List(lambda: DefDef), expr)) if isContextFun =>
+                traverseDef(lambda)
+                Traverser.traverse(expr)
+              case Some(tree) => Traverser.traverse(tree)
+              case None => ()
             previousTree.pop()
           case tree: ClassDef =>
             previousTree.push(tree)
@@ -57,14 +63,14 @@ class VariableCollector()(using Context, ThrowOrWarn) extends TreeTraverser:
           case _ => Traverser.traverse(tree)
       override def traverse(tree: Tree): Unit =
         tree match
-          case valDefOrBind: (ValDef | Bind) => addValDefOrBind(valDefOrBind)
+          case tree: (ValDef | Bind) => addValDefOrBind(tree)
           case _ => ()
 
         tree match
           case _: TypeTree => ()
           case _: DefDef | ClassDef => ()
-          case valDef: ValDef => traverse(valDef.rhs)
-          case bind: Bind => traverse(bind.body)
+          case tree: ValDef => traverse(tree.rhs)
+          case tree: Bind => traverse(tree.body)
           case InlineCall(inlineCall) =>
             val localVariables =
               inlinedVariables.getOrElseUpdate(inlineCall.symbol, collectInlineDef(inlineCall.symbol))

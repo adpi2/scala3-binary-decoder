@@ -588,7 +588,6 @@ trait BinaryMethodDecoder(using Context, ThrowOrWarn):
   private def matchSignature(
       method: binary.Method,
       declaredType: TypeOrMethodic,
-      expandContextFunction: Boolean = true,
       captureAllowed: Boolean = true,
       asJavaVarargs: Boolean = false,
       checkParamNames: Boolean = true,
@@ -678,7 +677,7 @@ trait BinaryMethodDecoder(using Context, ThrowOrWarn):
     val (expandedParamTypes, returnType) =
       if method.isConstructor && method.declaringClass.isJavaLangEnum then
         (List(defn.StringType, defn.IntType), tpe.returnType)
-      else if !method.isAnonFun then expandContextFunctions(tpe.returnType, acc = Nil)
+      else if !method.isAnonFun then tpe.returnType.expandContextFunctions
       else (List.empty, tpe.returnType)
     SourceParams(tpe.allParamNames, tpe.allParamTypes, expandedParamTypes, returnType)
 
@@ -697,13 +696,6 @@ trait BinaryMethodDecoder(using Context, ThrowOrWarn):
       method.parameters.splitAt(method.parameters.size - sourceParams.regularParamTypes.size)
     val (declaredParams, expandedParams) = regularParams.splitAt(sourceParams.declaredParamTypes.size)
     BinaryParams(capturedParams, declaredParams, expandedParams, method.returnType)
-
-  private def expandContextFunctions(tpe: Type, acc: List[Type]): (List[Type], Type) =
-    tpe.safeDealias match
-      case Some(tpe: AppliedType) if tpe.tycon.isContextFunction =>
-        val argsAsTypes = tpe.args.map(_.highIfWildcard)
-        expandContextFunctions(argsAsTypes.last, acc ::: argsAsTypes.init)
-      case _ => (acc, tpe)
 
   private def enclose(enclosing: DecodedMethod, enclosed: DecodedMethod): Boolean =
     (enclosing, enclosed) match
@@ -753,7 +745,7 @@ trait BinaryMethodDecoder(using Context, ThrowOrWarn):
     def isLazy(param: String) = "(.+)\\$lzy\\d+\\$\\d+".r.unapplySeq(param).nonEmpty
     capturedParams.forall(p => isProxy(p.name) || isCapture(p.name) || isThisOrOuter(p.name) || isLazy(p.name))
 
-  private def matchArgType(scalaType: Type, javaType: binary.Type, asJavaVarargs: Boolean): Boolean =
+  protected def matchArgType(scalaType: Type, javaType: binary.Type, asJavaVarargs: Boolean): Boolean =
     scalaType.erasedAsArgType(asJavaVarargs).exists(matchType(_, javaType))
 
   private lazy val scalaPrimitivesToJava: Map[ClassSymbol, String] = Map(
