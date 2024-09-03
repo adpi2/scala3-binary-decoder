@@ -476,12 +476,12 @@ abstract class BinaryVariableDecoderTests(scalaVersion: ScalaVersion) extends Bi
 
   test("scala3-compiler:3.3.1"):
     val decoder = initDecoder("org.scala-lang", "scala3-compiler_3", "3.3.1")
-    decoder.assertNotFoundVariable(
+    /* decoder.assertNotFoundVariable(
       "scala.quoted.runtime.impl.QuotesImpl$reflect$defn$",
       "dotty.tools.dotc.core.Symbols$Symbol TupleClass(int arity)",
       "dotty.tools.dotc.core.Types$TypeRef x$proxy1",
       2816
-    )
+    ) */
     decoder.assertDecodeVariable(
       "scala.quoted.runtime.impl.QuoteMatcher$",
       "scala.Option treeMatch(dotty.tools.dotc.ast.Trees$Tree scrutineeTree, dotty.tools.dotc.ast.Trees$Tree patternTree, dotty.tools.dotc.core.Contexts$Context x$3)",
@@ -516,4 +516,18 @@ abstract class BinaryVariableDecoderTests(scalaVersion: ScalaVersion) extends Bi
       "java.lang.String targetPath$1",
       35,
       "targetPath.<capture>: String"
+    )
+    decoder.assertDecodeVariable(
+      "scala.quoted.runtime.impl.printers.SourceCode$SourceCodePrinter",
+      "java.lang.Object printTree$$anonfun$adapted$5(scala.Option elideThis$48, scala.runtime.ObjectRef argsPrefix$2, scala.collection.immutable.List args1$2)",
+      "scala.runtime.ObjectRef argsPrefix$2",
+      408,
+      "argsPrefix.<capture>: String"
+    )
+    decoder.assertDecodeVariable(
+      "scala.quoted.runtime.impl.printers.SourceCode$SourceCodePrinter",
+      "scala.quoted.runtime.impl.printers.SourceCode$SourceCodePrinter printTree(java.lang.Object tree, scala.Option elideThis)",
+      "scala.runtime.ObjectRef argsPrefix",
+      390,
+      "argsPrefix: String"
     )

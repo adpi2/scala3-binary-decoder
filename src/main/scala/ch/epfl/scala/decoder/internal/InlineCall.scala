@@ -18,6 +18,9 @@ case class InlineCall private (
   def substTypeParams(tpe: TermType)(using Context): TermType =
     Substituters.substLocalTypeParams(tpe, symbol.typeParamSymbols, typeArgs)
 
+  def substTypeParams(tpe: Type)(using Context): Type =
+    Substituters.substLocalTypeParams(tpe, symbol.typeParamSymbols, typeArgs)
+
   def paramsMap(using Context): Map[TermSymbol, TermTree] =
     symbol.paramSymbols.zip(args).toMap
 

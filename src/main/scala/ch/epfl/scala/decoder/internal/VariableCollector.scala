@@ -17,16 +17,22 @@ object VariableCollector:
     val collector = VariableCollector()
     collector.collect(tree, sym)
 
-trait LocalVariable:
+sealed trait LocalVariable:
   def sym: Symbol
   def sourceLines: Option[binary.SourceLines]
+  def tpe: Type
 
 object LocalVariable:
-  case class This(sym: ClassSymbol, sourceLines: Option[binary.SourceLines]) extends LocalVariable
-  case class ValDef(sym: TermSymbol, sourceLines: Option[binary.SourceLines]) extends LocalVariable
-  case class InlinedFromDef(underlying: LocalVariable, inlineCall: InlineCall) extends LocalVariable:
+  case class This(sym: ClassSymbol, sourceLines: Option[binary.SourceLines]) extends LocalVariable:
+    def tpe: Type = sym.thisType
+
+  case class ValDef(sym: TermSymbol, sourceLines: Option[binary.SourceLines]) extends LocalVariable:
+    def tpe: Type = sym.declaredType.requireType
+
+  case class InlinedFromDef(underlying: LocalVariable, inlineCall: InlineCall)(using Context) extends LocalVariable:
     def sym: Symbol = underlying.sym
     def sourceLines: Option[binary.SourceLines] = underlying.sourceLines
+    def tpe: Type = inlineCall.substTypeParams(underlying.tpe)
 
 end LocalVariable
 

@@ -6,9 +6,9 @@ import tastyquery.Types.*
 import tastyquery.decoder.TypeMaps.*
 
 object Substituters:
-  def substLocalTypeParams(tp: TermType, from: List[LocalTypeParamSymbol], to: List[TypeOrWildcard])(using
+  def substLocalTypeParams(tp: TypeMappable, from: List[LocalTypeParamSymbol], to: List[TypeOrWildcard])(using
       Context
-  ): TermType =
+  ): tp.ThisTypeMappableType =
     new SubstLocalTypeParamsMap(from, to).apply(tp)
 
   private final class SubstLocalTypeParamsMap(from: List[LocalTypeParamSymbol], to: List[TypeOrWildcard])(using Context)

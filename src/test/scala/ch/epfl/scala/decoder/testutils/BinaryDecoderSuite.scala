@@ -124,13 +124,9 @@ trait BinaryDecoderSuite extends CommonFunSuite:
         printProgress: Boolean = false
     )(using munit.Location): Unit =
       val (classCounter, methodCounter, fieldCounter, variableCounter) = decodeAll(printProgress)
-      if classCounter.throwables.nonEmpty then
-        classCounter.printThrowables()
-        classCounter.printThrowable(0)
-      else if methodCounter.throwables.nonEmpty then
-        methodCounter.printThrowables()
-        methodCounter.printThrowable(0)
-      else if variableCounter.throwables.nonEmpty then variableCounter.printThrowable(0)
+      if classCounter.throwables.nonEmpty then classCounter.printThrowable(0)
+      else if methodCounter.throwables.nonEmpty then methodCounter.printThrowable(0)
+      // else if variableCounter.throwables.nonEmpty then variableCounter.printThrowable(0)
       // variableCounter.printNotFound(40)
       classCounter.check(expectedClasses)
       methodCounter.check(expectedMethods)
