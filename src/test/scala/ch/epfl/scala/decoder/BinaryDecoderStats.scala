@@ -14,8 +14,8 @@ class BinaryDecoderStats extends BinaryDecoderSuite:
     decoder.assertDecodeAll(
       expectedClasses = ExpectedCount(4426),
       expectedMethods = ExpectedCount(68421, ambiguous = 25, notFound = 33),
-      expectedFields = ExpectedCount(12549, ambiguous = 23, notFound = 4),
-      expectedVariables = ExpectedCount(138289, ambiguous = 4983, notFound = 2142)
+      expectedFields = ExpectedCount(12548, ambiguous = 26, notFound = 2),
+      expectedVariables = ExpectedCount(138202, ambiguous = 5158, notFound = 2054)
     )
 
   test("scala3-compiler:3.0.2"):
@@ -24,7 +24,7 @@ class BinaryDecoderStats extends BinaryDecoderSuite:
       expectedClasses = ExpectedCount(3859, notFound = 3),
       expectedMethods = ExpectedCount(60762, ambiguous = 24, notFound = 163),
       expectedFields = ExpectedCount(10673, ambiguous = 19, notFound = 7),
-      expectedVariables = ExpectedCount(119644, ambiguous = 4331, notFound = 2042)
+      expectedVariables = ExpectedCount(119555, ambiguous = 4481, notFound = 1981)
     )
 
   test("io.github.vigoo:zio-aws-ec2_3:4.0.5 - slow".ignore):
@@ -102,7 +102,7 @@ class BinaryDecoderStats extends BinaryDecoderSuite:
       ExpectedCount(149, notFound = 9),
       ExpectedCount(3546, notFound = 59),
       expectedFields = ExpectedCount(144, notFound = 2),
-      expectedVariables = ExpectedCount(15127, ambiguous = 18, notFound = 97)
+      expectedVariables = ExpectedCount(15128, ambiguous = 22, notFound = 92)
     )
 
   test("com.evolution:scache_3:5.1.2"):
@@ -114,7 +114,7 @@ class BinaryDecoderStats extends BinaryDecoderSuite:
       ExpectedCount(105),
       ExpectedCount(1509),
       expectedFields = ExpectedCount(161),
-      expectedVariables = ExpectedCount(3310, ambiguous = 36, notFound = 33)
+      expectedVariables = ExpectedCount(3257, ambiguous = 89, notFound = 33)
     )
 
   test("com.github.j5ik2o:docker-controller-scala-dynamodb-local_:1.15.34"):
@@ -184,5 +184,5 @@ class BinaryDecoderStats extends BinaryDecoderSuite:
       ExpectedCount(531),
       ExpectedCount(7267, ambiguous = 4, notFound = 1),
       expectedFields = ExpectedCount(851, notFound = 2),
-      expectedVariables = ExpectedCount(15713, ambiguous = 205, notFound = 28)
+      expectedVariables = ExpectedCount(15719, ambiguous = 209, notFound = 18)
     )

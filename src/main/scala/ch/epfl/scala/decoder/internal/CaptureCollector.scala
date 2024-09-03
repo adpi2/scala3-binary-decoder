@@ -14,30 +14,36 @@ import scala.languageFeature.postfixOps
 object CaptureCollector:
   def collectCaptures(tree: Tree)(using Context, ThrowOrWarn): Set[TermSymbol] =
     val collector = CaptureCollector()
-    collector.traverse(tree)
-    collector.capture.toSet
+    collector.collect(tree)
 
 class CaptureCollector(using Context, ThrowOrWarn) extends TreeTraverser:
-  private val capture: mutable.Set[TermSymbol] = mutable.Set.empty
   private val alreadySeen: mutable.Set[Symbol] = mutable.Set.empty
 
-  def loopCollect(symbol: Symbol)(collect: => Unit): Unit =
-    if !alreadySeen.contains(symbol) then
-      alreadySeen += symbol
-      collect
-  override def traverse(tree: Tree): Unit =
-    tree match
-      case _: TypeTree => ()
-      case valDef: ValDef =>
-        alreadySeen += valDef.symbol
-        traverse(valDef.rhs)
-      case bind: Bind =>
-        alreadySeen += bind.symbol
-        traverse(bind.body)
-      case ident: Ident =>
-        for sym <- ident.safeSymbol.collect { case sym: TermSymbol => sym } do
-          if !alreadySeen.contains(sym) && sym.isLocal then
-            if !sym.isMethod then capture += sym
-            if sym.isMethod || sym.isLazyVal then loopCollect(sym)(sym.tree.foreach(traverse))
-            else if sym.isModuleVal then loopCollect(sym)(sym.moduleClass.flatMap(_.tree).foreach(traverse))
-      case _ => super.traverse(tree)
+  def collect(tree: Tree): Set[TermSymbol] =
+    val localVariables: mutable.Set[TermSymbol] = mutable.Set.empty
+    val capture: mutable.Set[TermSymbol] = mutable.Set.empty
+    object Traverser extends TreeTraverser:
+      override def traverse(tree: Tree): Unit =
+        tree match
+          case _: TypeTree => ()
+          case valDef: ValDef =>
+            localVariables += valDef.symbol
+            traverse(valDef.rhs)
+          case bind: Bind =>
+            localVariables += bind.symbol
+            traverse(bind.body)
+          case ident: Ident =>
+            for sym <- ident.safeSymbol.collect { case sym: TermSymbol => sym } do
+              if !localVariables.contains(sym) && sym.isLocal then
+                if !sym.isMethod then capture += sym
+                if sym.isMethod || sym.isLazyVal || sym.isModuleVal then capture ++= loopCollect(sym)
+          case _ => super.traverse(tree)
+    Traverser.traverse(tree)
+    capture.toSet
+
+  def loopCollect(sym: TermSymbol): Set[TermSymbol] =
+    if !alreadySeen.contains(sym) then
+      alreadySeen += sym
+      if sym.isModuleVal then sym.moduleClass.toSet.flatMap(_.tree).flatMap(collect)
+      else sym.tree.toSet.flatMap(collect)
+    else Set.empty

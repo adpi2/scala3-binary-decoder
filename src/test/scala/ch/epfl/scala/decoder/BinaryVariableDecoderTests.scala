@@ -510,3 +510,10 @@ abstract class BinaryVariableDecoderTests(scalaVersion: ScalaVersion) extends Bi
       829,
       "sym: Symbols.Symbol"
     )
+    decoder.assertDecodeVariable(
+      "dotty.tools.scripting.Util$",
+      "scala.collection.IterableOnce collectMainMethods$1$$anonfun$1(java.net.URLClassLoader cl$1, java.lang.String targetPath$1, java.io.File packageMember)",
+      "java.lang.String targetPath$1",
+      35,
+      "targetPath.<capture>: String"
+    )
