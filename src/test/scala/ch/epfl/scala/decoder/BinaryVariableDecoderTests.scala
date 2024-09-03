@@ -503,3 +503,10 @@ abstract class BinaryVariableDecoderTests(scalaVersion: ScalaVersion) extends Bi
       192,
       "s: Tree[Types.Type]"
     )
+    decoder.assertDecodeVariable(
+      "dotty.tools.dotc.typer.Namer$Completer",
+      "scala.collection.immutable.List completerTypeParams(dotty.tools.dotc.core.Symbols$Symbol sym, dotty.tools.dotc.core.Contexts$Context x$2)",
+      "dotty.tools.dotc.core.Symbols$Symbol sym",
+      829,
+      "sym: Symbols.Symbol"
+    )

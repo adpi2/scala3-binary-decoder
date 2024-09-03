@@ -167,5 +167,10 @@ trait BinaryVariableDecoder(using Context, ThrowOrWarn):
   ): Boolean =
     decodedMethod.isGenerated ||
       variable.declaringMethod.isConstructor ||
-      !variable.declaringMethod.sourceLines.exists(x => localVar.sourceFile.name.endsWith(x.sourceName)) ||
-      localVar.startLine <= sourceLine && sourceLine <= localVar.endLine
+      localVar.sourceLines
+        .zip(variable.declaringMethod.sourceLines)
+        .forall:
+          case (fromTasty, fromBinary) =>
+            fromTasty.lines.isEmpty ||
+            !fromTasty.sourceName.endsWith(fromBinary.sourceName) ||
+            fromTasty.lines.head <= sourceLine && sourceLine <= fromTasty.lines.last

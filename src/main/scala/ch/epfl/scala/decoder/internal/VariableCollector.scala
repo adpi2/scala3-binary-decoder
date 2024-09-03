@@ -1,16 +1,16 @@
 package ch.epfl.scala.decoder.internal
 
-import tastyquery.Trees.*
-import scala.collection.mutable
+import ch.epfl.scala.decoder.ThrowOrWarn
+import ch.epfl.scala.decoder.binary
+import tastyquery.Contexts.*
+import tastyquery.SourceFile
 import tastyquery.Symbols.*
 import tastyquery.Traversers.*
-import tastyquery.Contexts.*
-import tastyquery.SourcePosition
+import tastyquery.Trees.*
 import tastyquery.Types.*
-import tastyquery.Traversers
-import ch.epfl.scala.decoder.ThrowOrWarn
+
+import scala.collection.mutable
 import scala.languageFeature.postfixOps
-import tastyquery.SourceFile
 
 object VariableCollector:
   def collectVariables(tree: Tree, sym: Option[TermSymbol] = None)(using Context, ThrowOrWarn): Set[LocalVariable] =
@@ -19,18 +19,14 @@ object VariableCollector:
 
 trait LocalVariable:
   def sym: Symbol
-  def sourceFile: SourceFile
-  def startLine: Int
-  def endLine: Int
+  def sourceLines: Option[binary.SourceLines]
 
 object LocalVariable:
-  case class This(sym: ClassSymbol, sourceFile: SourceFile, startLine: Int, endLine: Int) extends LocalVariable
-  case class ValDef(sym: TermSymbol, sourceFile: SourceFile, startLine: Int, endLine: Int) extends LocalVariable
+  case class This(sym: ClassSymbol, sourceLines: Option[binary.SourceLines]) extends LocalVariable
+  case class ValDef(sym: TermSymbol, sourceLines: Option[binary.SourceLines]) extends LocalVariable
   case class InlinedFromDef(underlying: LocalVariable, inlineCall: InlineCall) extends LocalVariable:
     def sym: Symbol = underlying.sym
-    def startLine: Int = underlying.startLine
-    def endLine: Int = underlying.endLine
-    def sourceFile: SourceFile = underlying.sourceFile
+    def sourceLines: Option[binary.SourceLines] = underlying.sourceLines
 
 end LocalVariable
 
@@ -39,28 +35,27 @@ class VariableCollector()(using Context, ThrowOrWarn) extends TreeTraverser:
 
   def collect(tree: Tree, sym: Option[TermSymbol] = None): Set[LocalVariable] =
     val variables: mutable.Set[LocalVariable] = mutable.Set.empty
-    var previousTree: mutable.Stack[Tree] = mutable.Stack.empty
+    type ScopeTree = DefDef | Block | CaseDef
+    var scopeTrees: mutable.Stack[ScopeTree] = mutable.Stack.empty
 
     object Traverser extends TreeTraverser:
       def traverseDef(tree: Tree): Unit =
         // traverse even if it's a DefDef or ClassDef
         tree match
           case tree: DefDef =>
-            previousTree.push(tree)
-            tree.paramLists.foreach(_.left.foreach(Traverser.traverse))
+            scoped(tree)(tree.paramLists.foreach(_.left.foreach(Traverser.traverse)))
             val isContextFun = tree.symbol.declaredType.returnType.safeDealias.exists(_.isContextFunction)
             tree.rhs match
-              case Some(Block(List(lambda: DefDef), expr)) if isContextFun =>
+              case Some(body @ Block(List(lambda: DefDef), expr)) if isContextFun =>
+                // if the method returns a context function, we traverse the internal anonfun
                 traverseDef(lambda)
                 Traverser.traverse(expr)
               case Some(tree) => Traverser.traverse(tree)
               case None => ()
-            previousTree.pop()
-          case tree: ClassDef =>
-            previousTree.push(tree)
-            Traverser.traverse(tree.rhs)
-            previousTree.pop()
+          case tree: ClassDef => tree.rhs.body.foreach(Traverser.traverse)
+          case tree: ValDef => tree.rhs.foreach(Traverser.traverse)
           case _ => Traverser.traverse(tree)
+
       override def traverse(tree: Tree): Unit =
         tree match
           case tree: (ValDef | Bind) => addValDefOrBind(tree)
@@ -69,44 +64,33 @@ class VariableCollector()(using Context, ThrowOrWarn) extends TreeTraverser:
         tree match
           case _: TypeTree => ()
           case _: DefDef | ClassDef => ()
-          case tree: ValDef => traverse(tree.rhs)
-          case tree: Bind => traverse(tree.body)
           case InlineCall(inlineCall) =>
             val localVariables =
               inlinedVariables.getOrElseUpdate(inlineCall.symbol, collectInlineDef(inlineCall.symbol))
             variables ++= localVariables.map(LocalVariable.InlinedFromDef(_, inlineCall))
-            previousTree.push(inlineCall.termRefTree)
             inlineCall.args.foreach(traverseDef)
-            previousTree.pop()
-          case _ =>
-            previousTree.push(tree)
-            super.traverse(tree)
-            previousTree.pop()
+          case tree: (Block | CaseDef) => scoped(tree)(super.traverse(tree))
+          case _ => super.traverse(tree)
+
+      private def scoped(scopeTree: ScopeTree)(f: => Unit): Unit =
+        scopeTrees.push(scopeTree)
+        f
+        scopeTrees.pop()
 
       private def addValDefOrBind(valDef: ValDef | Bind): Unit =
         val sym = valDef.symbol.asInstanceOf[TermSymbol]
-        previousTree
-          .collectFirst { case tree: (Block | CaseDef | DefDef | Template) => tree }
-          .foreach { parentTree =>
-            variables +=
-              LocalVariable.ValDef(
-                sym,
-                parentTree.pos.sourceFile,
-                valDef.pos.startLine + 1,
-                parentTree.pos.endLine + 1
-              )
-          }
+        val sourceLines = scopeTrees.headOption.map: scope =>
+          binary.SourceLines(scope.pos.sourceFile.name, Seq(valDef.pos.startLine + 1, scope.pos.endLine + 1))
+        variables += LocalVariable.ValDef(sym, sourceLines)
+    end Traverser
 
     sym
       .flatMap(allOuterClasses)
-      .foreach(cls =>
-        variables += LocalVariable.This(
-          cls,
-          cls.pos.sourceFile,
-          if cls.pos.isUnknown then -1 else cls.pos.startLine + 1,
-          if cls.pos.isUnknown then -1 else cls.pos.endLine + 1
-        )
-      )
+      .foreach: cls =>
+        val sourceLines =
+          if cls.pos.isUnknown then None
+          else Some(binary.SourceLines(cls.pos.sourceFile.name, Seq(cls.pos.startLine + 1, cls.pos.endLine + 1)))
+        variables += LocalVariable.This(cls, sourceLines)
     Traverser.traverseDef(tree)
     variables.toSet
   end collect
