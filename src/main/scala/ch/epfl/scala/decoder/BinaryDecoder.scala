@@ -2,7 +2,7 @@ package ch.epfl.scala.decoder
 
 import ch.epfl.scala.decoder.binary
 import ch.epfl.scala.decoder.internal.*
-import tastyquery.Contexts.Context
+import tastyquery.Contexts.*
 import tastyquery.Symbols.Symbol
 import tastyquery.jdk.ClasspathLoaders
 
@@ -37,4 +37,5 @@ class BinaryDecoder(using Context, ThrowOrWarn)
     extends BinaryClassDecoder,
       BinaryMethodDecoder,
       BinaryFieldDecoder,
-      BinaryVariableDecoder
+      BinaryVariableDecoder:
+  def context = ctx

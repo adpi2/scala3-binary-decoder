@@ -1850,6 +1850,11 @@ abstract class BinaryMethodDecoderTests(scalaVersion: ScalaVersion) extends Bina
       "TreeUnpickler.readTpt.<static forwarder>()(using Contexts.Context): tpd.Tree",
       generated = true
     )
+    decoder.assertDecodeMethod(
+      "dotty.tools.dotc.typer.Implicits$OfTypeImplicits",
+      "scala.collection.immutable.List refs()",
+      "Implicits.OfTypeImplicits.refs: List[Types.ImplicitRef]"
+    )
 
   test("bug: Type.of creates capture".ignore):
     val source =

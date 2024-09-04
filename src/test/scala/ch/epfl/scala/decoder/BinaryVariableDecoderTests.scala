@@ -531,3 +531,17 @@ abstract class BinaryVariableDecoderTests(scalaVersion: ScalaVersion) extends Bi
       390,
       "argsPrefix: String"
     )
+    decoder.assertDecodeVariable(
+      "scala.quoted.runtime.impl.printers.SourceCode$SourceCodePrinter",
+      "java.lang.String escapedString$$anonfun$adapted$1(java.lang.Object ch)",
+      "java.lang.Object ch",
+      1435,
+      "ch: Char"
+    )
+    decoder.assertDecodeVariable(
+      "dotty.tools.dotc.typer.Implicits$OfTypeImplicits",
+      "scala.collection.immutable.List refs()",
+      "scala.collection.mutable.ListBuffer buf",
+      276,
+      "buf: ListBuffer[Types.TermRef]"
+    )

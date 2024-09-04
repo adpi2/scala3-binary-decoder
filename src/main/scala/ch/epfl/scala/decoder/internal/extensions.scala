@@ -303,11 +303,12 @@ extension (field: binary.Instruction.Field)
     field.opcode == 0xb5 || field.opcode == 0xb3
 
 extension (method: DecodedMethod)
-  def isGenerated: Boolean =
+  def isGenerated(using ctx: Context): Boolean =
     method match
       case method: DecodedMethod.ValOrDefDef =>
         val sym = method.symbol
-        (sym.isGetter && (!sym.owner.isTrait || !sym.isModuleOrLazyVal)) || // getter
+        def isThreadUnsafe = sym.hasAnnotation(Definitions.threadUnsafeClass)
+        (sym.isGetter && (!sym.isModuleOrLazyVal && !sym.owner.isTrait && !isThreadUnsafe)) || // getter
         (sym.isLocal && sym.isModuleOrLazyVal) || // local def
         sym.isSetter ||
         (sym.isSynthetic && !sym.isLocal) ||

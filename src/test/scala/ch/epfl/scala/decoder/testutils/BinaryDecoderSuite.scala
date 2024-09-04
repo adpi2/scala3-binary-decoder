@@ -54,7 +54,7 @@ trait BinaryDecoderSuite extends CommonFunSuite:
       val binaryMethod = loadBinaryMethod(className, method)
       val decodedMethod = decoder.decode(binaryMethod)
       assertEquals(formatter.format(decodedMethod), expected)
-      assertEquals(decodedMethod.isGenerated, generated)
+      assertEquals(decodedMethod.isGenerated(using decoder.context), generated)
 
     def assertDecodeField(className: String, field: String, expected: String)(using
         munit.Location
@@ -126,7 +126,7 @@ trait BinaryDecoderSuite extends CommonFunSuite:
       val (classCounter, methodCounter, fieldCounter, variableCounter) = decodeAll(printProgress)
       if classCounter.throwables.nonEmpty then classCounter.printThrowable(0)
       else if methodCounter.throwables.nonEmpty then methodCounter.printThrowable(0)
-      // else if variableCounter.throwables.nonEmpty then variableCounter.printThrowable(0)
+      else if variableCounter.throwables.nonEmpty then variableCounter.printThrowable(0)
       // variableCounter.printNotFound(40)
       classCounter.check(expectedClasses)
       methodCounter.check(expectedMethods)

@@ -28,12 +28,13 @@ class JavaReflectMethod(
     val localVariables =
       for variable <- extraInfos.localVariables yield
         val typeName = asm.Type.getType(variable.descriptor).getClassName
+        val isParameter = extraInfos.labels.headOption.contains(variable.start)
         val sourceLines =
           for
             sourceName <- sourceName
             line <- extraInfos.labels.get(variable.start)
           yield binary.SourceLines(sourceName, Seq(line))
-        AsmVariable(variable.name, loader.loadClass(typeName), this, sourceLines)
+        AsmVariable(variable.name, loader.loadClass(typeName), this, sourceLines, isParameter)
     parameters ++ localVariables
 
   override def name: String = method match

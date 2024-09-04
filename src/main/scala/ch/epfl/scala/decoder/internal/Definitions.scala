@@ -6,6 +6,7 @@ import tastyquery.Types.*
 
 object Definitions:
   def scalaRuntimePackage(using Context) = defn.scalaPackage.getPackageDecl(SimpleName("runtime")).get
+  def scalaAnnotationPackage(using Context) = defn.scalaPackage.getPackageDecl(SimpleName("annotation")).get
   def javaPackage(using Context) = defn.RootPackage.getPackageDecl(SimpleName("java")).get
   def javaIoPackage(using Context) = javaPackage.getPackageDecl(SimpleName("io")).get
   def javaLangInvokePackage(using Context) = defn.javaLangPackage.getPackageDecl(SimpleName("invoke")).get
@@ -13,6 +14,7 @@ object Definitions:
   def PartialFunctionClass(using Context) = defn.scalaPackage.getDecl(typeName("PartialFunction")).get.asClass
   def AbstractPartialFunctionClass(using Context) =
     scalaRuntimePackage.getDecl(typeName("AbstractPartialFunction")).get.asClass
+  def threadUnsafeClass(using Context) = scalaAnnotationPackage.getDecl(typeName("threadUnsafe")).get.asClass
   def SerializableClass(using Context) = javaIoPackage.getDecl(typeName("Serializable")).get.asClass
   def javaLangEnumClass(using Context) = defn.javaLangPackage.getDecl(typeName("Enum")).get.asClass
 

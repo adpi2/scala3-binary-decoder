@@ -37,17 +37,11 @@ trait BinaryVariableDecoder(using Context, ThrowOrWarn):
       decodedMethod match
         case decodedMethod: DecodedMethod.SAMOrPartialFunctionImpl =>
           decodeValDef(decodedMethod, variable, sourceLine)
-            .orIfEmpty(
-              decodeSAMOrPartialFun(
-                decodedMethod,
-                decodedMethod.implementedSymbol,
-                variable,
-                sourceLine
-              )
-            )
+            .orIfEmpty(decodeSAMOrPartialFun(decodedMethod, decodedMethod.implementedSymbol, variable, sourceLine))
         case _: DecodedMethod.Bridge => ignore(variable, "Bridge method")
         case _ =>
-          if variable.declaringMethod.isConstructor then
+          if variable.isParameter then decodeParameter(decodedMethod, variable)
+          else if variable.declaringMethod.isConstructor then
             decodeValDef(decodedMethod, variable, sourceLine)
               .orIfEmpty(decodeLocalValDefInConstructor(decodedMethod, variable, sourceLine))
           else decodeValDef(decodedMethod, variable, sourceLine)
@@ -77,24 +71,24 @@ trait BinaryVariableDecoder(using Context, ThrowOrWarn):
       if name == sym.nameStr && matchCaptureType(sym, variable.`type`)
     yield DecodedVariable.CapturedVariable(decodedMethod, sym)
 
+  private def decodeParameter(decodedMethod: DecodedMethod, variable: binary.Variable): Seq[DecodedVariable] =
+    for
+      owner <- decodedMethod.symbolOpt.toSeq.collect { case sym: TermSymbol => sym }
+      params <- owner.paramSymss.collect { case Left(value) => value }
+      sym <- params
+      if variable.name == sym.nameStr
+    yield DecodedVariable.ValDef(decodedMethod, sym)
+
   private def decodeValDef(
       decodedMethod: DecodedMethod,
       variable: binary.Variable,
       sourceLine: Int
-  ): Seq[DecodedVariable] = decodedMethod.symbolOpt match
-    case Some(owner: TermSymbol) if owner.sourceLanguage == SourceLanguage.Scala2 =>
-      for
-        paramSym <- owner.paramSymss.collect { case Left(value) => value }.flatten
-        if variable.name == paramSym.nameStr
-      yield DecodedVariable.ValDef(decodedMethod, paramSym)
-    case _ =>
-      for
-        tree <- decodedMethod.treeOpt.toSeq
-        localVar <- VariableCollector.collectVariables(tree).toSeq
-        if variable.name == localVar.sym.nameStr &&
-          matchSourceLines(decodedMethod, variable, localVar, sourceLine) &&
-          matchType(localVar.sym, localVar.tpe, variable.`type`)
-      yield DecodedVariable.ValDef(decodedMethod, localVar.sym.asTerm)
+  ): Seq[DecodedVariable] =
+    for
+      tree <- decodedMethod.treeOpt.toSeq
+      localVar <- VariableCollector.collectVariables(tree).toSeq
+      if variable.name == localVar.sym.nameStr && matchSourceLinesAndType(variable, localVar, sourceLine)
+    yield DecodedVariable.ValDef(decodedMethod, localVar.sym.asTerm)
 
   private def decodeLocalValDefInConstructor(
       decodedMethod: DecodedMethod,
@@ -104,7 +98,7 @@ trait BinaryVariableDecoder(using Context, ThrowOrWarn):
     for
       tree <- decodedMethod.owner.treeOpt.toSeq
       localVar <- VariableCollector.collectVariables(tree).toSeq
-      if variable.name == localVar.sym.nameStr && matchSourceLines(decodedMethod, variable, localVar, sourceLine)
+      if variable.name == localVar.sym.nameStr && matchSourceLinesAndType(variable, localVar, sourceLine)
     yield DecodedVariable.ValDef(decodedMethod, localVar.sym.asTerm)
 
   private def decodeSAMOrPartialFun(
@@ -179,22 +173,11 @@ trait BinaryVariableDecoder(using Context, ThrowOrWarn):
     else if sym.isVar then binaryTpe.isRef
     else matchArgType(sym.declaredType.requireType, binaryTpe, false)
 
-  private def matchType(sym: Symbol, tpe: Type, binaryTpe: binary.Type): Boolean =
-    sym match
-      case sym: ClassSymbol => matchArgType(tpe, binaryTpe, false)
-      case sym: TermSymbol =>
-        if sym.isModuleOrLazyVal then binaryTpe.isLazy
-        else (sym.isVar && binaryTpe.isRef) || matchArgType(tpe, binaryTpe, false)
-      case _ => false
+  private def matchSourceLinesAndType(variable: binary.Variable, localVar: LocalVariable, sourceLine: Int): Boolean =
+    matchSourceLines(variable, localVar, sourceLine) && matchType(variable.`type`, localVar)
 
-  private def matchSourceLines(
-      decodedMethod: DecodedMethod,
-      variable: binary.Variable,
-      localVar: LocalVariable,
-      sourceLine: Int
-  ): Boolean =
-    decodedMethod.isGenerated ||
-      variable.declaringMethod.isConstructor ||
+  private def matchSourceLines(variable: binary.Variable, localVar: LocalVariable, sourceLine: Int): Boolean =
+    variable.declaringMethod.isConstructor ||
       localVar.sourceLines
         .zip(variable.declaringMethod.sourceLines)
         .forall:
@@ -202,3 +185,11 @@ trait BinaryVariableDecoder(using Context, ThrowOrWarn):
             fromTasty.lines.isEmpty ||
             !fromTasty.sourceName.endsWith(fromBinary.sourceName) ||
             fromTasty.lines.head <= sourceLine && sourceLine <= fromTasty.lines.last
+
+  private def matchType(binaryTpe: binary.Type, localVar: LocalVariable): Boolean =
+    localVar.sym match
+      case sym: ClassSymbol => matchArgType(localVar.tpe, binaryTpe, false)
+      case sym: TermSymbol =>
+        if sym.isModuleOrLazyVal then binaryTpe.isLazy
+        else (sym.isVar && binaryTpe.isRef) || matchArgType(localVar.tpe, binaryTpe, false)
+      case _ => false
