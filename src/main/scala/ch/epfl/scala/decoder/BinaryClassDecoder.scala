@@ -9,7 +9,7 @@ import scala.util.matching.Regex
 
 trait BinaryClassDecoder(using Context, ThrowOrWarn):
   self: BinaryDecoder =>
-  
+
   protected val scoper = Scoper()
 
   def decode(cls: binary.BinaryClass): DecodedClass =

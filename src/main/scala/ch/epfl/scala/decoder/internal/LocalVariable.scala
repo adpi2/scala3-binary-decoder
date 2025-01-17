@@ -19,6 +19,7 @@ object LocalVariable:
   case class ValDef(sym: TermSymbol, scope: Scope) extends LocalVariable:
     def tpe: Type = sym.declaredType.requireType
 
-  case class InlinedFromDef(underlying: LocalVariable, inlineCall: InlineCall, scope: Scope)(using Context) extends LocalVariable:
+  case class InlinedFromDef(underlying: LocalVariable, inlineCall: InlineCall, scope: Scope)(using Context)
+      extends LocalVariable:
     def sym: Symbol = underlying.sym
     def tpe: Type = inlineCall.substTypeParams(underlying.tpe)

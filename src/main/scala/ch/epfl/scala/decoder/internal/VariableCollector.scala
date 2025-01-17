@@ -14,7 +14,10 @@ import scala.collection.mutable
 import scala.languageFeature.postfixOps
 
 object VariableCollector:
-  def collectVariables(scoper: Scoper, tree: Tree, sym: Option[TermSymbol] = None)(using Context, ThrowOrWarn): Set[LocalVariable] =
+  def collectVariables(scoper: Scoper, tree: Tree, sym: Option[TermSymbol] = None)(using
+      Context,
+      ThrowOrWarn
+  ): Set[LocalVariable] =
     val collector = VariableCollector(scoper)
     collector.collect(tree, sym)
 
@@ -56,7 +59,7 @@ class VariableCollector(scoper: Scoper)(using Context, ThrowOrWarn) extends Tree
           case InlineCall(inlineCall) =>
             val localVariables =
               inlinedVariables.getOrElseUpdate(inlineCall.symbol, collectInlineDef(inlineCall.symbol))
-            variables ++= localVariables.map { v => 
+            variables ++= localVariables.map { v =>
               val scope = scoper.inlinedScope(v.scope, inlineCall)
               LocalVariable.InlinedFromDef(v, inlineCall, scope)
             }

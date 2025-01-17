@@ -83,7 +83,7 @@ final case class InlinedFromDef[S](underlying: LiftedTree[S], inlineCall: Inline
  *   inline def withContext(ctx: Context)(inline f: Context ?=> T): T = f(using ctx)
  *   withContext(someCtx)(list.map(<anon fun>))
  * <anon fun> can capture someCtx
- * 
+ *
  * @param params the params of the inline lambda
  * @param inlineArgs the other args of the inline call
  */

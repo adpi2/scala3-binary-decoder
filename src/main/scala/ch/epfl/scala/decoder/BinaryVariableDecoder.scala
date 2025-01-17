@@ -43,7 +43,9 @@ trait BinaryVariableDecoder(using Context, ThrowOrWarn):
         case _ =>
           if variable.isParameter then
             decodeParameter(decodedMethod, variable)
-              .orIfEmpty(decodeValDef(decodedMethod, variable, sourceLine)) // if the method returns a contextual function
+              .orIfEmpty(
+                decodeValDef(decodedMethod, variable, sourceLine)
+              ) // if the method returns a contextual function
           else if variable.declaringMethod.isConstructor then
             decodeValDef(decodedMethod, variable, sourceLine)
               .orIfEmpty(decodeLocalValDefInConstructor(decodedMethod, variable, sourceLine))
@@ -180,7 +182,6 @@ trait BinaryVariableDecoder(using Context, ThrowOrWarn):
             case sym: TermSymbol if sym.isVal && !sym.isMethod => sym
           }
         yield DecodedVariable.AnyValThis(decodedMethod, sym)
-
 
   private def decodeAnyValCapture(decodedMethod: DecodedMethod): Seq[DecodedVariable] =
     for

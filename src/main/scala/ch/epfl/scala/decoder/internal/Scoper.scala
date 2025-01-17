@@ -13,7 +13,8 @@ import tastyquery.Modifiers.TermSymbolKind
 class Scoper(using Context, ThrowOrWarn):
   private val cache = mutable.Map.empty[Symbol, Scope]
 
-  /** Compute the scope inlined from an inline call:
+  /**
+   * Compute the scope inlined from an inline call:
    *   - compute the scope of the inlined arguments
    *   - use the pos of the inlineCall as main position
    */
@@ -33,8 +34,7 @@ class Scoper(using Context, ThrowOrWarn):
       case None => Scope.empty
       case Some(tree) =>
         cache.getOrElseUpdate(
-          sym,
-          {
+          sym, {
             cache += sym -> Scope.empty // break recursion
             getScope(tree)
           }

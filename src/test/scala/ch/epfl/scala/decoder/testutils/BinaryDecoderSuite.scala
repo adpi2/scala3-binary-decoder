@@ -139,7 +139,10 @@ trait BinaryDecoderSuite extends CommonFunSuite:
       fieldCounter.check(expectedFields)
       variableCounter.check(expectedVariables)
 
-    def decodeAll(printProgress: Boolean = false, classFilter: Set[String] = Set.empty): (Counter, Counter, Counter, Counter) =
+    def decodeAll(
+        printProgress: Boolean = false,
+        classFilter: Set[String] = Set.empty
+    ): (Counter, Counter, Counter, Counter) =
       val classCounter = Counter(decoder.name + " classes")
       val methodCounter = Counter(decoder.name + " methods")
       val fieldCounter = Counter(decoder.name + " fields")
@@ -154,8 +157,7 @@ trait BinaryDecoderSuite extends CommonFunSuite:
         decodedMethod <- decoder.tryDecode(decodedClass, binaryMethod, methodCounter)
         binaryVariable <- binaryMethod.variables
         line <- debugLine(binaryVariable)
-      do
-        decoder.tryDecode(decodedMethod, binaryVariable, line, variableCounter)
+      do decoder.tryDecode(decodedMethod, binaryVariable, line, variableCounter)
       classCounter.printReport()
       methodCounter.printReport()
       fieldCounter.printReport()
@@ -260,7 +262,9 @@ trait BinaryDecoderSuite extends CommonFunSuite:
       case f: binary.Field => s"(\"${f.declaringClass}\", \"${formatField(f)}\")"
       case m: binary.Method => s"(\"${m.declaringClass.name}\", \"${formatMethod(m)}\")"
       case v: binary.Variable =>
-        s"""("${v.declaringMethod.declaringClass.name}", "${formatMethod(v.declaringMethod)}", "${formatVariable(v)}", ${debugLine(v).get})""".stripMargin
+        s"""("${v.declaringMethod.declaringClass.name}", "${formatMethod(v.declaringMethod)}", "${formatVariable(
+            v
+          )}", ${debugLine(v).get})""".stripMargin
       case cls => s"\"${cls.name}\""
 
   private def formatMethod(m: binary.Method): String =
@@ -333,7 +337,7 @@ trait BinaryDecoderSuite extends CommonFunSuite:
       println(s"mean: ${formatted.map((j, s) => s.size - j.size).sum / formatted.size}")
     end printComparisionWithJavaFormatting
 
-    def printSuccess() = success.foreach { (s, _) => println(formatDebug(s)) }
+    def printSuccess() = success.foreach((s, _) => println(formatDebug(s)))
 
     def printNotFound() =
       notFound.foreach { case (s1, NotFoundException(s2, _)) =>
