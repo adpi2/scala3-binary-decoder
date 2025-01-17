@@ -66,21 +66,14 @@ extension (symbol: TermSymbol)
     symbol.owner.isInline && symbol.owner.asTerm.paramSymbols.contains(symbol)
 
   def paramSymbols: List[TermSymbol] =
-    symbol.tree.toList
-      .collect { case tree: DefDef => tree.paramLists }
+    symbol.paramSymss
+      .collect { case Left(termSyms) => termSyms }
       .flatten
-      .collect { case Left(params) => params }
-      .flatten
-      .map(_.symbol)
 
   def typeParamSymbols: List[LocalTypeParamSymbol] =
-    symbol.tree.toList
-      .collect { case tree: DefDef => tree.paramLists }
+    symbol.paramSymss
+      .collect { case Right(typeParamSyms) => typeParamSyms }
       .flatten
-      .collect { case Right(typeParams) => typeParams }
-      .flatten
-      .map(_.symbol)
-      .collect { case sym: LocalTypeParamSymbol => sym }
 
 extension [A, S[+X] <: IterableOnce[X]](xs: S[A])
   def singleOpt: Option[A] =

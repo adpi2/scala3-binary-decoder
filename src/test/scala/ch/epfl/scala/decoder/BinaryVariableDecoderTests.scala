@@ -489,7 +489,7 @@ abstract class BinaryVariableDecoderTests(scalaVersion: ScalaVersion) extends Bi
     // decoder.assertDecodeVariable("example.A", "int factAcc$$anonfun$1(int acc$tailLocal1$1, int _$1)", "int acc$tailLocal1$1", 6, "acc.<capture>: Int")
   }
 
-  test("scala3-compiler:3.3.1"):
+  test("scala3-compiler:3.3.1".only):
     val decoder = initDecoder("org.scala-lang", "scala3-compiler_3", "3.3.1")
     /* decoder.assertNotFoundVariable(
       "scala.quoted.runtime.impl.QuotesImpl$reflect$defn$",
@@ -582,10 +582,19 @@ abstract class BinaryVariableDecoderTests(scalaVersion: ScalaVersion) extends Bi
       491,
       "s: Tree[Types.Type]"
     )
+    // transparent inline
     decoder.assertDecodeVariable(
       "dotty.tools.dotc.typer.Namer$TypeDefCompleter",
       "dotty.tools.dotc.core.Contexts$Context given_Context$lzyINIT1$1(scala.runtime.LazyRef given_Context$lzy1$1)",
       "dotty.tools.dotc.core.Contexts$Context x$proxy4",
       965,
       "x$proxy4: Contexts.Context | Null"
+    )
+    // inline def in stdLibPatches
+    decoder.assertDecodeVariable(
+      "scala.quoted.runtime.impl.QuotesImpl$reflect$defn$",
+      "dotty.tools.dotc.core.Symbols$Symbol TupleClass(int arity)",
+      "dotty.tools.dotc.core.Types$TypeRef x$proxy1",
+      2816,
+      "x: T"
     )

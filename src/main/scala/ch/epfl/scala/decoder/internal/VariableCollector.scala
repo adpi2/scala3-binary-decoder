@@ -34,8 +34,7 @@ class VariableCollector(scoper: Scoper)(using Context, ThrowOrWarn) extends Tree
         // traverse even if it's a DefDef or ClassDef
         tree match
           case tree: DefDef =>
-            // TODO comment this line
-            scoped(tree)(tree.paramLists.foreach(_.left.foreach(Traverser.traverse)))
+            scoped(tree)(tree.paramLists.foreach(_.left.foreach(traverse)))
             val isContextFun = tree.symbol.declaredType.returnType.safeDealias.exists(_.isContextFunction)
             tree.rhs match
               case Some(body @ Block(List(lambda: DefDef), expr)) if isContextFun =>
@@ -58,7 +57,7 @@ class VariableCollector(scoper: Scoper)(using Context, ThrowOrWarn) extends Tree
           case _: DefDef | ClassDef => ()
           case InlineCall(inlineCall) =>
             val localVariables =
-              inlinedVariables.getOrElseUpdate(inlineCall.symbol, collectInlineDef(inlineCall.symbol))
+              inlinedVariables.getOrElseUpdate(inlineCall.symbol, collectInlineDef(inlineCall))
             variables ++= localVariables.map { v =>
               val scope = scoper.inlinedScope(v.scope, inlineCall)
               LocalVariable.InlinedFromDef(v, inlineCall, scope)
@@ -89,9 +88,13 @@ class VariableCollector(scoper: Scoper)(using Context, ThrowOrWarn) extends Tree
     variables.toSet
   end collect
 
-  private def collectInlineDef(symbol: TermSymbol): Set[LocalVariable] =
-    inlinedVariables(symbol) = Set.empty // break recursion
-    symbol.tree.toSet.flatMap(tree => collect(tree, Some(symbol)))
+  private def collectInlineDef(inlineCall: InlineCall): Set[LocalVariable] =
+    inlinedVariables(inlineCall.symbol) = Set.empty // break recursion
+    inlineCall.symbol.tree match
+      case Some(tree) => collect(tree, Some(inlineCall.symbol))
+      case None => // inline def in stdLibPatches don't have trees
+        val scope = Scope(inlineCall.callTree.pos, Set.empty, Set.empty)
+        inlineCall.symbol.paramSymbols.map(LocalVariable.ValDef(_, scope)).toSet
 
   private def allOuterClasses(sym: Symbol): List[ClassSymbol] =
     def loop(sym: Symbol, acc: List[ClassSymbol]): List[ClassSymbol] =
