@@ -201,6 +201,10 @@ object Patterns:
   object InlinedThis:
     def unapply(variable: binary.Variable): Boolean = variable.name.endsWith("_this")
 
+  object XDollar:
+    def unapply(variable: binary.Variable): Option[Int] =
+      "x\\$(\\d+)".r.unapplySeq(variable.name).map(xs => xs(0).toInt)
+
   extension (field: binary.Field)
     private def extractFromDecodedNames[T](regex: Regex)(extract: List[String] => T): Option[Seq[T]] =
       val extracted = field.unexpandedDecodedNames

@@ -15,7 +15,7 @@ class BinaryDecoderStats extends BinaryDecoderSuite:
       expectedClasses = ExpectedCount(4426),
       expectedMethods = ExpectedCount(68421, ambiguous = 25, notFound = 33),
       expectedFields = ExpectedCount(12549, ambiguous = 26, notFound = 1),
-      expectedVariables = ExpectedCount(142179, ambiguous = 1979, notFound = 1256)
+      expectedVariables = ExpectedCount(142515, ambiguous = 1979, notFound = 920)
       // classFilter = Set("scala.quoted.runtime.impl.QuoteMatcher$")
     )
 
@@ -25,7 +25,7 @@ class BinaryDecoderStats extends BinaryDecoderSuite:
       expectedClasses = ExpectedCount(3859, notFound = 3),
       expectedMethods = ExpectedCount(60762, ambiguous = 24, notFound = 163),
       expectedFields = ExpectedCount(10672, ambiguous = 21, notFound = 6),
-      expectedVariables = ExpectedCount(123036, ambiguous = 1599, notFound = 1377)
+      expectedVariables = ExpectedCount(123372, ambiguous = 1599, notFound = 1041)
     )
 
   test("io.github.vigoo:zio-aws-ec2_3:4.0.5 - slow".ignore):
