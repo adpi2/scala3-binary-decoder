@@ -5,10 +5,11 @@ import tastyquery.Exceptions.*
 
 import scala.util.Properties
 
-class Scala3LtsBinaryClassDecoderTests extends BinaryClassDecoderTests(ScalaVersion.`3.lts`)
-class Scala3NextBinaryClassDecoderTests extends BinaryClassDecoderTests(ScalaVersion.`3.next`)
+class Scala3NextBinaryClassDecoderTests extends Scala3LtsBinaryClassDecoderTests:
+  override val scalaVersion = ScalaVersion.`3.next`
 
-abstract class BinaryClassDecoderTests(scalaVersion: ScalaVersion) extends BinaryDecoderSuite:
+class Scala3LtsBinaryClassDecoderTests extends BinaryDecoderSuite:
+  val scalaVersion: ScalaVersion = ScalaVersion.`3.lts`
   def isScala33 = scalaVersion.isScala33
   def isScala34 = scalaVersion.isScala34
 

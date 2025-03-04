@@ -5,10 +5,12 @@ import tastyquery.Exceptions.*
 
 import scala.util.Properties
 
-class Scala3LtsBinaryFieldDecoderTests extends BinaryFieldDecoderTests(ScalaVersion.`3.lts`)
-class Scala3NextBinaryFieldDecoderTests extends BinaryFieldDecoderTests(ScalaVersion.`3.next`)
+class Scala3NextBinaryFieldDecoderTests extends Scala3LtsBinaryFieldDecoderTests:
+  override val scalaVersion: ScalaVersion = ScalaVersion.`3.next`
 
-abstract class BinaryFieldDecoderTests(scalaVersion: ScalaVersion) extends BinaryDecoderSuite:
+class Scala3LtsBinaryFieldDecoderTests extends BinaryDecoderSuite:
+  val scalaVersion: ScalaVersion = ScalaVersion.`3.lts`
+
   def isScala33 = scalaVersion.isScala33
   def isScala34 = scalaVersion.isScala34
 
@@ -110,7 +112,7 @@ abstract class BinaryFieldDecoderTests(scalaVersion: ScalaVersion) extends Binar
       """|package example
          |
          |trait A {
-         |  def foo = 
+         |  def foo =
          |    enum B:
          |      case C, D
          |}
