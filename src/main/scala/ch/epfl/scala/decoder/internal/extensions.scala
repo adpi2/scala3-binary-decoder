@@ -208,6 +208,12 @@ extension (tree: TermTree)
   def safeTpe(using Context, ThrowOrWarn): Option[TermType] =
     tryOrNone(tree.tpe)
 
+  def lambdaDef(using Context): Option[Tree] =
+    tree match
+      case Block(_, expr) => expr.lambdaDef
+      case Lambda(meth, _) => meth.symbol.tree
+      case _ => None
+
 extension (pos: SourcePosition)
   def isFullyDefined: Boolean =
     !pos.isUnknown && pos.hasLineColumnInformation

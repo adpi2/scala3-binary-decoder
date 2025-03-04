@@ -14,6 +14,15 @@ import java.nio.file.FileSystem
 object TestingDecoder:
   def javaRuntime = JavaRuntime(Properties.jdkHome).get
 
+  def apply(sources: Seq[String], scalaVersion: ScalaVersion)(using ThrowOrWarn): TestingDecoder =
+    val module = Module.fromSources(
+      sources.zipWithIndex.map((s, i) => s"Test$i.scala" -> s),
+      scalaVersion,
+      Seq.empty,
+      Seq.empty
+    )
+    TestingDecoder(module.mainEntry, module.classpath)
+
   def apply(source: String, scalaVersion: ScalaVersion)(using ThrowOrWarn): TestingDecoder =
     val module = Module.fromSource(source, scalaVersion)
     TestingDecoder(module.mainEntry, module.classpath)

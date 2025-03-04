@@ -15,7 +15,7 @@ class BinaryDecoderStats extends BinaryDecoderSuite:
       expectedClasses = ExpectedCount(4426),
       expectedMethods = ExpectedCount(68421, ambiguous = 25, notFound = 33),
       expectedFields = ExpectedCount(12549, ambiguous = 26, notFound = 1),
-      expectedVariables = ExpectedCount(142549, ambiguous = 1979, notFound = 886)
+      expectedVariables = ExpectedCount(142855, ambiguous = 2002, notFound = 557)
       // classFilter = Set("scala.quoted.runtime.impl.QuoteMatcher$")
     )
 

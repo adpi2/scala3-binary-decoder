@@ -474,7 +474,7 @@ class Scala3LtsBinaryVariableDecoderTests extends BinaryDecoderSuite:
     )
   }
 
-  test("tail-local variables".ignore) {
+  test("tail-local variables".ignore):
     val source =
       """|package example
          |
@@ -488,7 +488,32 @@ class Scala3LtsBinaryVariableDecoderTests extends BinaryDecoderSuite:
     val decoder = TestingDecoder(source, scalaVersion)
     decoder.showVariables("example.A", "int factAcc$$anonfun$1(int acc$tailLocal1$1, int _$1)")
     // decoder.assertDecodeVariable("example.A", "int factAcc$$anonfun$1(int acc$tailLocal1$1, int _$1)", "int acc$tailLocal1$1", 6, "acc.<capture>: Int")
-  }
+
+  test("inlined lambda"):
+    val source1 =
+      """|package example
+         |
+         |class Context
+         |
+         |object Context:
+         |  inline def inContext[T](c: Context)(inline op: Context ?=> T): T =
+         |    op(using c)
+         |""".stripMargin
+    val source2 =
+      """|package example
+         |
+         |import Context.*
+         |
+         |class A:
+         |  def m: String =
+         |    val c = Context()
+         |    inContext(c) {
+         |      val x = "foo"
+         |      x + summon[Context].toString
+         |    }
+         |""".stripMargin
+    val decoder = TestingDecoder(Seq(source1, source2), scalaVersion)
+    decoder.assertDecodeVariable("example.A", "java.lang.String m()", "java.lang.String x", 10, "x: String")
 
   test("scala3-compiler:3.3.1"):
     val decoder = initDecoder("org.scala-lang", "scala3-compiler_3", "3.3.1")
