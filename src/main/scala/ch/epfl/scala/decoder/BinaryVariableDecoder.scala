@@ -77,8 +77,12 @@ trait BinaryVariableDecoder(using Context, ThrowOrWarn):
     yield DecodedVariable.CapturedVariable(decodedMethod, sym)
 
   private def decodeParameter(decodedMethod: DecodedMethod, variable: binary.Variable): Seq[DecodedVariable] =
-    val XDollar = "x\\$(\\d+)".r
     (decodedMethod, variable) match
+      case (m: DecodedMethod.AdaptedFun, Patterns.V(i)) =>
+        for
+          owner <- decodedMethod.symbolOpt.toSeq.collect { case sym: TermSymbol => sym }
+          if owner.paramSymbols.size > i - 1
+        yield DecodedVariable.ValDef(m, owner.paramSymbols(i - 1))
       case (m: DecodedMethod.SetterAccessor, Patterns.XDollar(0)) if !m.symbol.isMethod =>
         Seq(DecodedVariable.SetterParam(m, m.symbol.declaredType.asInstanceOf[Type]))
       case (m: DecodedMethod.SpecializedMethod, Patterns.XDollar(i)) =>

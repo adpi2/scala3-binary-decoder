@@ -224,7 +224,8 @@ object DecodedVariable:
   final class SetterParam(val owner: DecodedMethod.SetterAccessor, val declaredType: Type) extends DecodedVariable:
     override def toString: String = s"SetterParam($owner, ${declaredType.showBasic})"
 
-  final class SpecializedParam(val owner: DecodedMethod.SpecializedMethod, val symbol: TermSymbol) extends DecodedVariable:
+  final class SpecializedParam(val owner: DecodedMethod.SpecializedMethod, val symbol: TermSymbol)
+      extends DecodedVariable:
     def declaredType: TypeOrMethodic = symbol.declaredType
     override def symbolOpt: Option[TermSymbol] = Some(symbol)
     override def toString: String = s"SpecializedParam($owner, ${symbol.showBasic})"

@@ -606,3 +606,10 @@ class Scala3LtsBinaryVariableDecoderTests extends BinaryDecoderSuite:
       8,
       "k.<specialized>: K"
     )
+    decoder.assertDecodeVariable(
+      "dotty.tools.dotc.util.StackTraceOps$",
+      "java.lang.Object unseen$1$$anonfun$adapted$1(scala.collection.mutable.Set seen$5, java.lang.Throwable e$5, java.lang.Object v1)",
+      "java.lang.Object v1",
+      48,
+      "<anon>: Boolean"
+    )

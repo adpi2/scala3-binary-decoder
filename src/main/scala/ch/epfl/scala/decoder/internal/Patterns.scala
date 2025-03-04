@@ -205,6 +205,10 @@ object Patterns:
     def unapply(variable: binary.Variable): Option[Int] =
       "x\\$(\\d+)".r.unapplySeq(variable.name).map(xs => xs(0).toInt)
 
+  object V:
+    def unapply(variable: binary.Variable): Option[Int] =
+      "v(\\d+)".r.unapplySeq(variable.name).map(xs => xs(0).toInt)
+
   extension (field: binary.Field)
     private def extractFromDecodedNames[T](regex: Regex)(extract: List[String] => T): Option[Seq[T]] =
       val extracted = field.unexpandedDecodedNames
