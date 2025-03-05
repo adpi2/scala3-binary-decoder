@@ -515,6 +515,27 @@ class Scala3LtsBinaryVariableDecoderTests extends BinaryDecoderSuite:
     val decoder = TestingDecoder(Seq(source1, source2), scalaVersion)
     decoder.assertDecodeVariable("example.A", "java.lang.String m()", "java.lang.String x", 10, "x: String")
 
+  test("captured anon val"):
+    val source =
+      """|package example
+         |
+         |class A:
+         |  def foo(x: String): String = "a" + x
+         |
+         |class B:
+         |  var a: A = A()
+         |  def m: List[String] =
+         |    List("bar").map(a.foo)
+         |""".stripMargin
+    val decoder = TestingDecoder(source, scalaVersion)
+    decoder.assertDecodeVariable(
+      "example.B",
+      "java.lang.String m$$anonfun$1(example.A $1$$1, java.lang.String x)",
+      "example.A $1$$1",
+      9,
+      "<anon>.<capture>: A"
+    )
+
   test("scala3-compiler:3.3.1"):
     val decoder = initDecoder("org.scala-lang", "scala3-compiler_3", "3.3.1")
     /* decoder.assertNotFoundVariable(

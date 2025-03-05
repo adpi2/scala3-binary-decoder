@@ -166,7 +166,10 @@ object Patterns:
       field.extractFromDecodedNames("(.+)\\$\\d+".r)(xs => xs(0))
 
     def unapply(variable: binary.Variable): Option[String] =
-      "(.+)\\$\\d+".r.unapplySeq(variable.name).map(xs => xs(0))
+      "(\\$\\d+)\\$\\$\\d+".r // anon variable
+        .unapplySeq(variable.name)
+        .orElse("(.+)\\$\\d+".r.unapplySeq(variable.name))
+        .map(xs => xs(0))
   end Capture
 
   object CapturedLzyVariable:
