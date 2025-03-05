@@ -637,6 +637,13 @@ class Scala3LtsBinaryVariableDecoderTests extends BinaryDecoderSuite:
       965,
       "x$proxy4: Contexts.Context | Null"
     )
+    decoder.assertDecodeVariable(
+      "dotty.tools.dotc.util.HashSet",
+      "void copyFrom(java.lang.Object[] oldTable)",
+      "java.lang.Object x$proxy7",
+      158,
+      "x$proxy7: e.type & T"
+    )
     // inline def in stdLibPatches
     decoder.assertDecodeVariable(
       "scala.quoted.runtime.impl.QuotesImpl$reflect$defn$",

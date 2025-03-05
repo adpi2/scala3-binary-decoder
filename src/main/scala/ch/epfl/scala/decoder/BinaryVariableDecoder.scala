@@ -212,7 +212,9 @@ trait BinaryVariableDecoder(using Context, ThrowOrWarn):
     val sourceName = variable.sourceName.getOrElse("")
     // we use endsWith instead of == because of tasty-query#434
     val positions = localVar.positions.filter(pos => pos.sourceFile.name.endsWith(sourceName))
-    variable.declaringMethod.isConstructor || positions.exists(_.containsLine(sourceLine - 1))
+    variable.declaringMethod.isConstructor ||
+    positions.isEmpty || // can happen when localVar has been inlined from a transparent inline
+    positions.exists(_.containsLine(sourceLine - 1))
 
   private def matchType(binaryTpe: binary.Type, localVar: LocalVariable): Boolean =
     localVar.sym match
