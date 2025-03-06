@@ -650,8 +650,8 @@ trait BinaryMethodDecoder(using Context, ThrowOrWarn):
     liftedTree match
       case InlinedFromDef(underlying, inlineCall) =>
         DecodedMethod.InlinedMethod(wrapIfInline(underlying, decodedMethod), inlineCall.callTree)
-      case InlinedFromArg(underlying, params, inlineArgs) =>
-        DecodedMethod.InlinedMethodFromArg(wrapIfInline(underlying, decodedMethod), params.map(_ -> inlineArgs).toMap)
+      case InlinedFromArg(underlying, params, inlineCall) =>
+        DecodedMethod.InlinedMethodFromArg(wrapIfInline(underlying, decodedMethod), params, inlineCall)
       case _ => decodedMethod
 
   private def matchLiftedFunSignature(method: binary.Method, tree: LiftedTree[TermSymbol]): Boolean =
@@ -732,14 +732,14 @@ trait BinaryMethodDecoder(using Context, ThrowOrWarn):
   private def matchCapture(liftedTree: LiftedTree[?], capturedParams: Seq[binary.Parameter]): Boolean =
     val anonymousPattern = "\\$\\d+".r
     val evidencePattern = "evidence\\$\\d+".r
-    def toPattern(variable: String): Regex =
-      variable match
+    def toPattern(variable: TermSymbol): Regex =
+      variable.nameStr match
         case anonymousPattern() => "\\$\\d+\\$\\$\\d+".r
         case evidencePattern() => "evidence\\$\\d+\\$\\d+".r
         case _ =>
-          val encoded = NameTransformer.encode(variable)
+          val encoded = NameTransformer.encode(variable.nameStr)
           s"${Regex.quote(encoded)}(\\$$tailLocal\\d+)?(\\$$lzy\\d+)?\\$$\\d+".r
-    val patterns = liftedTree.capture(scoper).map(toPattern)
+    val patterns = liftedTree.scope(scoper).capturedVariables.map(toPattern)
     def isCapture(param: String) =
       patterns.exists(_.unapplySeq(param).nonEmpty)
     def isProxy(param: String) = "(.+)\\$proxy\\d+\\$\\d+".r.unapplySeq(param).nonEmpty

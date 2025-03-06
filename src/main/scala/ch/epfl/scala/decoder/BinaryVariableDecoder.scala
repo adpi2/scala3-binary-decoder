@@ -26,6 +26,9 @@ trait BinaryVariableDecoder(using Context, ThrowOrWarn):
         else decodeCapturedLzyVariable(decodedMethod, variable, name)
       case Patterns.CapturedTailLocalVariable(name) => decodeMethodCapture(decodedMethod, variable, name)
       case Patterns.AnyValCapture() => decodeAnyValCapture(decodedMethod)
+      case Patterns.CapturedProxy(nameWithProxy, name) =>
+        decodeMethodCapture(decodedMethod, variable, name)
+          .orIfEmpty(decodeFromInlinedLambda(decodedMethod, variable, name))
       case Patterns.Capture(name) =>
         if variable.declaringMethod.isConstructor then decodeClassCapture(decodedMethod, variable, name)
         else decodeMethodCapture(decodedMethod, variable, name)
@@ -76,6 +79,19 @@ trait BinaryVariableDecoder(using Context, ThrowOrWarn):
       if name == sym.nameStr && matchCaptureType(sym, variable.`type`)
     yield DecodedVariable.CapturedVariable(decodedMethod, sym)
 
+  private def decodeFromInlinedLambda(
+      decodedMethod: DecodedMethod,
+      variable: binary.Variable,
+      name: String
+  ): Seq[DecodedVariable.CapturedVariable] =
+    decodedMethod match
+      case m: DecodedMethod.InlinedMethodFromArg =>
+        for
+          sym <- m.inlineCall.symbol.paramSymbols
+          if sym.nameStr == name
+        yield DecodedVariable.CapturedVariable(decodedMethod, sym)
+      case _ => Seq.empty
+
   private def getScope(decodedSym: DecodedSymbol): Option[Scope] =
     decodedSym.symbolOpt
       .map(scoper.getScope)
@@ -83,7 +99,7 @@ trait BinaryVariableDecoder(using Context, ThrowOrWarn):
       .map: baseScope =>
         decodedSym match
           case m: DecodedMethod.InlinedMethodFromArg =>
-            scoper.inlinedFromLambdaArg(baseScope, m.inlinedArgsByParam)
+            scoper.inlinedFromLambdaArg(baseScope, m.lambdaParams, m.inlineCall)
           case _ => baseScope
 
   private def decodeParameter(decodedMethod: DecodedMethod, variable: binary.Variable): Seq[DecodedVariable] =

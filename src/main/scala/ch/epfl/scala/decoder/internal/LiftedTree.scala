@@ -16,11 +16,7 @@ sealed trait LiftedTree[S]:
   def tpe: TermType
   def owner: Symbol
 
-  def inlinedFrom: List[InlineCall] = Nil
-  def inlinedArgsByParam: Map[TermSymbol, Seq[TermTree]] = Map.empty
   def scope(scoper: Scoper): Scope = scoper.getScope(tree)
-  def positions(scoper: Scoper): Seq[SourcePosition] = scope(scoper).allPositions.toSeq
-  def capture(scoper: Scoper): Seq[String] = scope(scoper).capturedVariables.toSeq.map(_.nameStr)
 end LiftedTree
 
 sealed trait LocalTermDef(val symbol: TermSymbol) extends LiftedTree[TermSymbol]:
@@ -73,9 +69,6 @@ final case class InlinedFromDef[S](underlying: LiftedTree[S], inlineCall: Inline
   override def scope(scoper: Scoper): Scope =
     scoper.inlinedScope(underlying.scope(scoper), inlineCall)
 
-  override def inlinedFrom: List[InlineCall] = inlineCall :: underlying.inlinedFrom
-  override def inlinedArgsByParam: Map[TermSymbol, Seq[TermTree]] = underlying.inlinedArgsByParam
-
 /**
  * A lambda in an inline lambda can capture a val passed as argument to the inline call
  * Example:
@@ -86,14 +79,12 @@ final case class InlinedFromDef[S](underlying: LiftedTree[S], inlineCall: Inline
  * @param params the params of the inline lambda
  * @param inlineArgs the other args of the inline call
  */
-final case class InlinedFromArg[S](underlying: LiftedTree[S], params: Seq[TermSymbol], inlineArgs: Seq[TermTree])
+final case class InlinedFromArg[S](underlying: LiftedTree[S], lambdaParams: Seq[TermSymbol], inlineCall: InlineCall)
     extends LiftedTree[S]:
   def tree: Tree = underlying.tree
   def symbol: S = underlying.symbol
   def owner: Symbol = underlying.owner
   def tpe: TermType = underlying.tpe
 
-  override def scope(scoper: Scoper): Scope = scoper.inlinedFromLambdaArg(underlying.scope(scoper), inlinedArgsByParam)
-  override def inlinedFrom: List[InlineCall] = underlying.inlinedFrom
-  override def inlinedArgsByParam: Map[TermSymbol, Seq[TermTree]] =
-    underlying.inlinedArgsByParam ++ params.map(_ -> inlineArgs)
+  override def scope(scoper: Scoper): Scope =
+    scoper.inlinedFromLambdaArg(underlying.scope(scoper), lambdaParams, inlineCall)

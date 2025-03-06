@@ -63,7 +63,7 @@ class LiftedTreeCollector private (root: Symbol)(using Context, ThrowOrWarn):
             buffer ++= inlineCall.args.flatMap { arg =>
               arg.asLambda match
                 case Some(lambda) =>
-                  collect(arg).map(InlinedFromArg(_, lambda.paramSymbols, inlineCall.args))
+                  collect(arg).map(InlinedFromArg(_, lambda.paramSymbols, inlineCall))
                 case None => collect(arg)
             }
             super.traverse(inlineCall.termRefTree)

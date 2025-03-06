@@ -687,3 +687,10 @@ class Scala3LtsBinaryVariableDecoderTests extends BinaryDecoderSuite:
       336,
       "given_Ordering_Diagnostic.<capture>: Ordering[Diagnostic]"
     )
+    decoder.assertDecodeVariable(
+      "dotty.tools.repl.ReplCompiler",
+      "scala.util.Either typeCheck$$anonfun$1(boolean errorsAllowed$2, dotty.tools.dotc.util.SourceFile src$1, dotty.tools.dotc.core.Contexts$FreshContext c$proxy1$1, dotty.tools.dotc.ast.Trees$PackageDef pkg)",
+      "dotty.tools.dotc.core.Contexts$FreshContext c$proxy1$1",
+      211,
+      "c.<capture>: Context"
+    )

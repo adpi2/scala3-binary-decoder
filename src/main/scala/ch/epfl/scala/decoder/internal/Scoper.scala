@@ -42,15 +42,12 @@ class Scoper(using Context, ThrowOrWarn):
     val capturedVariables = scope.capturedVariables ++ argScopes.flatMap(_.capturedVariables)
     Scope(position, inlinedPositions, capturedVariables)
 
-  def inlinedFromLambdaArg(scope: Scope, inlinedArgsByLambdaParam: Map[TermSymbol, Seq[TermTree]]): Scope =
-    val argScopes =
-      for
-        (param, args) <- inlinedArgsByLambdaParam
-        if scope.capturedVariables.contains(param)
-        arg <- args
-      yield getScope(arg)
-    val capturedVariables = scope.capturedVariables ++ argScopes.flatMap(_.capturedVariables)
-    scope.copy(capturedVariables = capturedVariables)
+  def inlinedFromLambdaArg(scope: Scope, lambdaParams: Seq[TermSymbol], inlineCall: InlineCall): Scope =
+    if lambdaParams.toSet.intersect(scope.capturedVariables).nonEmpty then
+      val argScopes = inlineCall.args.map(getScope)
+      val capturedVariables = scope.capturedVariables ++ argScopes.flatMap(_.capturedVariables)
+      scope.copy(capturedVariables = capturedVariables)
+    else scope
 
   def getScope(tree: Tree): Scope = buildScope(getLocalScope(tree))
   def getScope(sym: Symbol): Scope = buildScope(getLocalScope(sym))

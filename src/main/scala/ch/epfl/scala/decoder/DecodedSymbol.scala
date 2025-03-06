@@ -5,6 +5,7 @@ import tastyquery.SourcePosition
 import tastyquery.Symbols.*
 import tastyquery.Trees.*
 import tastyquery.Types.*
+import ch.epfl.scala.decoder.internal.InlineCall
 
 sealed trait DecodedSymbol:
   def symbolOpt: Option[ClassSymbol | TermSymbol] = None
@@ -167,7 +168,8 @@ object DecodedMethod:
 
   final class InlinedMethodFromArg(
       val underlying: DecodedMethod,
-      val inlinedArgsByParam: Map[TermSymbol, Seq[TermTree]]
+      val lambdaParams: Seq[TermSymbol],
+      val inlineCall: InlineCall
   ) extends DecodedMethod:
     override def base: DecodedMethod = underlying.base
     override def owner: DecodedClass = underlying.owner

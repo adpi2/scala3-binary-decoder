@@ -187,6 +187,10 @@ object Patterns:
     def unapply(variable: binary.Variable): Option[String] =
       "(.+)\\$tailLocal\\d+(\\$\\d+)?".r.unapplySeq(variable.name).map(xs => xs(0))
 
+  object CapturedProxy:
+    def unapply(variable: binary.Variable): Option[(String, String)] =
+      "((.+)\\$proxy\\d+)\\$\\d+".r.unapplySeq(variable.name).map(xs => (xs(0), xs(1)))
+
   object This:
     def unapply(variable: binary.Variable): Boolean = variable.name == "this"
 
