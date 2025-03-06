@@ -13,9 +13,9 @@ class BinaryDecoderStats extends BinaryDecoderSuite:
     val decoder = initDecoder("org.scala-lang", "scala3-compiler_3", "3.3.1")
     decoder.assertDecodeAll(
       expectedClasses = ExpectedCount(4426),
-      expectedMethods = ExpectedCount(68421, ambiguous = 25, notFound = 33),
+      expectedMethods = ExpectedCount(68422, ambiguous = 24, notFound = 33),
       expectedFields = ExpectedCount(12552, ambiguous = 23, notFound = 1),
-      expectedVariables = ExpectedCount(143180, ambiguous = 1885, notFound = 350)
+      expectedVariables = ExpectedCount(143208, ambiguous = 1885, notFound = 324)
       // classFilter = Set("dotty.tools.dotc.util.HashSet")
     )
 

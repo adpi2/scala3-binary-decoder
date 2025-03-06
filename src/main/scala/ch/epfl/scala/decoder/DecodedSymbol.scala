@@ -157,6 +157,7 @@ object DecodedMethod:
     override def owner: DecodedClass = underlying.owner
     override def declaredType: TypeOrMethodic = underlying.declaredType
     override def symbolOpt: Option[TermSymbol] = underlying.symbolOpt
+    override def treeOpt: Option[Tree] = underlying.treeOpt
     def callPos: SourcePosition = callTree.pos
     override def toString: String =
       if underlying.isInstanceOf[InlinedMethod] then underlying.toString
@@ -169,6 +170,7 @@ object DecodedMethod:
     override def owner: DecodedClass = underlying.owner
     override def declaredType: TypeOrMethodic = underlying.declaredType
     override def symbolOpt: Option[TermSymbol] = underlying.symbolOpt
+    override def treeOpt: Option[Tree] = underlying.treeOpt
     override def toString: String =
       if underlying.isInstanceOf[InlinedMethodFromArg] then underlying.toString
       else s"$underlying (inlined from arg)"

@@ -673,3 +673,10 @@ class Scala3LtsBinaryVariableDecoderTests extends BinaryDecoderSuite:
       88,
       "ictx.<capture>: FreshContext"
     )
+    decoder.assertDecodeVariable(
+      "dotty.tools.repl.ReplDriver",
+      "scala.Tuple2 renderDefinitions$$anonfun$3(dotty.tools.repl.State state$13)",
+      "dotty.tools.repl.State state$13",
+      436,
+      "state.<capture>: State"
+    )
