@@ -177,7 +177,10 @@ object Patterns:
       field.extractFromDecodedNames("(.+)\\$lzy\\d+\\$\\d+".r)(xs => xs(0))
 
     def unapply(variable: binary.Variable): Option[String] =
-      "(.+)\\$lzy\\d+\\$\\d+".r.unapplySeq(variable.name).map(xs => xs(0))
+      "(\\$\\d+)\\$\\$lzy\\d+\\$\\d+".r // anon variable
+        .unapplySeq(variable.name)
+        .orElse("(.+)\\$lzy\\d+\\$\\d+".r.unapplySeq(variable.name))
+        .map(xs => xs(0))
 
   object LazyValBitmap:
     def unapply(field: binary.Field): Option[String] =

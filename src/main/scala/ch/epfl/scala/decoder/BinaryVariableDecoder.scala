@@ -183,9 +183,8 @@ trait BinaryVariableDecoder(using Context, ThrowOrWarn):
     for
       metTree <- decodedMethod.treeOpt.toSeq
       decodedClassSym <- decodedClassSym.toSeq
-      if VariableCollector.collectVariables(scoper, metTree, sym = decodedMethod.symbolOpt).exists { localVar =>
-        localVar.sym == decodedClassSym
-      }
+      localVariables = VariableCollector.collectVariables(scoper, metTree, sym = decodedMethod.symbolOpt)
+      if localVariables.map(_.sym).filter(_.isClass).exists(decodedClassSym.linearization.contains)
     yield DecodedVariable.This(decodedMethod, decodedClassSym.thisType)
 
   private def decodeOuterParam(decodedMethod: DecodedMethod): Seq[DecodedVariable] =

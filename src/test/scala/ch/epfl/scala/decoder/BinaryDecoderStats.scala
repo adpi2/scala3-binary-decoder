@@ -15,7 +15,7 @@ class BinaryDecoderStats extends BinaryDecoderSuite:
       expectedClasses = ExpectedCount(4426),
       expectedMethods = ExpectedCount(68422, ambiguous = 24, notFound = 33),
       expectedFields = ExpectedCount(12552, ambiguous = 23, notFound = 1),
-      expectedVariables = ExpectedCount(143228, ambiguous = 1885, notFound = 304)
+      expectedVariables = ExpectedCount(143319, ambiguous = 1885, notFound = 213)
       // classFilter = Set("dotty.tools.dotc.util.HashSet")
     )
 

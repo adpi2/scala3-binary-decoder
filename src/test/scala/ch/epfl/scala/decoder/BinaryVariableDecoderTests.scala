@@ -694,3 +694,17 @@ class Scala3LtsBinaryVariableDecoderTests extends BinaryDecoderSuite:
       211,
       "c.<capture>: Context"
     )
+    decoder.assertDecodeVariable(
+      "dotty.tools.dotc.typer.VarianceChecker$Validator$",
+      "scala.Option apply(scala.Option status, dotty.tools.dotc.core.Types$Type tp)",
+      "dotty.tools.dotc.reporting.trace$ TraceSyntax_this",
+      131,
+      "this: trace.this.type"
+    )
+    decoder.assertDecodeVariable(
+      "dotty.tools.dotc.typer.Typer",
+      "java.lang.String prefix$1(dotty.tools.dotc.ast.Trees$Tree res$3, scala.runtime.LazyRef $29$$lzy1$3)",
+      "scala.runtime.LazyRef $29$$lzy1$3",
+      2890,
+      "<anon>.<capture>: (String, String)"
+    )
