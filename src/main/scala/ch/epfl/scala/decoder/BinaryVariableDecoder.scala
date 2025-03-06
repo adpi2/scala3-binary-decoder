@@ -58,7 +58,7 @@ trait BinaryVariableDecoder(using Context, ThrowOrWarn):
       variable: binary.Variable,
       name: String
   ): Seq[DecodedVariable] =
-    decodedMethod match
+    decodedMethod.base match
       case m: DecodedMethod.LazyInit if m.symbol.nameStr == name =>
         Seq(DecodedVariable.CapturedVariable(decodedMethod, m.symbol))
       case m: DecodedMethod.ValOrDefDef if m.symbol.nameStr == name =>

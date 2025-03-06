@@ -35,6 +35,7 @@ object DecodedClass:
       else s"$underlying (inlined)"
 
 sealed trait DecodedMethod extends DecodedSymbol:
+  def base: DecodedMethod = this
   def owner: DecodedClass
   override def symbolOpt: Option[TermSymbol] = None
   def declaredType: TypeOrMethodic
@@ -154,6 +155,7 @@ object DecodedMethod:
     override def toString: String = s"AdaptedFun($owner, ${declaredType.showBasic})"
 
   final class InlinedMethod(val underlying: DecodedMethod, val callTree: Tree) extends DecodedMethod:
+    override def base: DecodedMethod = underlying.base
     override def owner: DecodedClass = underlying.owner
     override def declaredType: TypeOrMethodic = underlying.declaredType
     override def symbolOpt: Option[TermSymbol] = underlying.symbolOpt
@@ -167,6 +169,7 @@ object DecodedMethod:
       val underlying: DecodedMethod,
       val inlinedArgsByParam: Map[TermSymbol, Seq[TermTree]]
   ) extends DecodedMethod:
+    override def base: DecodedMethod = underlying.base
     override def owner: DecodedClass = underlying.owner
     override def declaredType: TypeOrMethodic = underlying.declaredType
     override def symbolOpt: Option[TermSymbol] = underlying.symbolOpt

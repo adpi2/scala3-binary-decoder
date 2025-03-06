@@ -680,3 +680,10 @@ class Scala3LtsBinaryVariableDecoderTests extends BinaryDecoderSuite:
       436,
       "state.<capture>: State"
     )
+    decoder.assertDecodeVariable(
+      "dotty.tools.repl.ReplDriver",
+      "scala.math.Ordering given_Ordering_Diagnostic$lzyINIT1$1(scala.runtime.LazyRef given_Ordering_Diagnostic$lzy1$1)",
+      "scala.runtime.LazyRef given_Ordering_Diagnostic$lzy1$1",
+      336,
+      "given_Ordering_Diagnostic.<capture>: Ordering[Diagnostic]"
+    )
