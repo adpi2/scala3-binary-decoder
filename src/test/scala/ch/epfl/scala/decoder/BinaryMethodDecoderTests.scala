@@ -1856,6 +1856,37 @@ class Scala3LtsBinaryMethodDecoderTests extends BinaryDecoderSuite:
       "scala.collection.immutable.List refs()",
       "Implicits.OfTypeImplicits.refs: List[Types.ImplicitRef]"
     )
+    decoder.assertDecodeMethod(
+      "dotty.tools.dotc.typer.Typer",
+      "dotty.tools.dotc.core.Types$TermRef $anonfun$78(dotty.tools.dotc.core.Contexts$Context x$4$68, dotty.tools.dotc.core.Types$TermRef ref$4, dotty.tools.dotc.core.Denotations$SingleDenotation alt)",
+      "Typer.adapt1.adaptOverloaded.<anon fun>(alt: Denotations.SingleDenotation): TermRef"
+    )
+    decoder.assertDecodeMethod(
+      "org.scalajs.ir.Trees$JSGlobalRef",
+      "java.lang.Object $init$$$anonfun$1(java.lang.String name$1)",
+      "Trees.JSGlobalRef.<by-name arg>: Any"
+    )
+    /* decoder.assertDecodeMethod(
+      "scala.collection.IterableOnceOps",
+      "java.lang.Object maxBy(scala.Function1 f, scala.math.Ordering ord)",
+      ""
+    ) */
+    decoder.assertDecodeMethod(
+      "dotty.tools.dotc.typer.Applications$",
+      "dotty.tools.dotc.typer.Applications$tupleFold$2$ tupleFold$1(dotty.tools.dotc.core.Contexts$Context x$2$19, scala.runtime.LazyRef tupleFold$lzy1$2)",
+      "Applications.foldApplyTupleType.tupleFold: tupleFold",
+      generated = true
+    )
+    decoder.assertDecodeMethod(
+      "dotty.tools.backend.sjs.JSCodeGen",
+      "org.scalajs.ir.Trees$Tree $anonfun$43(org.scalajs.ir.Trees$VarRef overloadVar$6, org.scalajs.ir.Position pos$67, dotty.tools.backend.sjs.JSCodeGen$ConstructorTree _$21)",
+      "JSCodeGen.genJSClassCtorBody.postStats.<anon fun>(ConstructorTree[SplitSecondaryJSCtor]): Trees.Tree"
+    )
+    decoder.assertDecodeMethod(
+      "dotty.tools.dotc.typer.Synthesizer",
+      "scala.collection.immutable.List synthArgManifests$1(dotty.tools.dotc.typer.Synthesizer$ManifestKind kind$4, long span$22, dotty.tools.dotc.core.Contexts$Context evidence$17$3, java.lang.Object tp)",
+      "Synthesizer.manifestFactoryOf.….<anon fun>.synthArgManifests(tp: Manifestable): List[tpd.Tree]"
+    )
 
   test("bug: Type.of creates capture".ignore):
     val source =

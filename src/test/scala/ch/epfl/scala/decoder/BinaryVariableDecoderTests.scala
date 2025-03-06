@@ -666,3 +666,10 @@ class Scala3LtsBinaryVariableDecoderTests extends BinaryDecoderSuite:
       48,
       "<anon>: Boolean"
     )
+    decoder.assertDecodeVariable(
+      "dotty.tools.dotc.Driver",
+      "scala.Tuple2 setup$$anonfun$1(dotty.tools.dotc.core.Contexts$FreshContext ictx$1, scala.collection.immutable.List fileNames)",
+      "dotty.tools.dotc.core.Contexts$FreshContext ictx$1",
+      88,
+      "ictx.<capture>: FreshContext"
+    )

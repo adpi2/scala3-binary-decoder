@@ -84,6 +84,7 @@ class StackTraceFormatter(using ThrowOrWarn):
       case method: DecodedMethod.AdaptedFun => formatOwner(method.target)
       case method: DecodedMethod.SAMOrPartialFunctionConstructor => format(method.owner)
       case method: DecodedMethod.InlinedMethod => formatOwner(method.underlying)
+      case method: DecodedMethod.InlinedMethodFromArg => formatOwner(method.underlying)
 
   private def formatOwner(field: DecodedField): String =
     format(field.owner)
@@ -138,6 +139,7 @@ class StackTraceFormatter(using ThrowOrWarn):
       case method: DecodedMethod.AdaptedFun => formatName(method.target).dot("<adapted>")
       case _: DecodedMethod.SAMOrPartialFunctionConstructor => "<init>"
       case method: DecodedMethod.InlinedMethod => formatName(method.underlying)
+      case method: DecodedMethod.InlinedMethodFromArg => formatName(method.underlying)
 
   private def formatOwner(sym: Symbol): String = formatAsOwner(sym.owner)
 

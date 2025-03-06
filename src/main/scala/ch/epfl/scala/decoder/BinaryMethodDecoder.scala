@@ -515,7 +515,7 @@ trait BinaryMethodDecoder(using Context, ThrowOrWarn):
   private def decodeByNameArgs(decodedClass: DecodedClass, method: binary.Method): Seq[DecodedMethod] =
     collectLiftedTrees(decodedClass, method) { case arg: ByNameArg if !arg.isInline => arg }
       .collect {
-        case arg if matchReturnType(arg.tpe, method.returnType) && matchCapture(arg.capture, method.parameters) =>
+        case arg if matchReturnType(arg.tpe, method.returnType) && matchCapture(arg, method.parameters) =>
           wrapIfInline(arg, DecodedMethod.ByNameArg(decodedClass, arg.owner, arg.tree, arg.tpe.asInstanceOf))
       }
 
@@ -523,7 +523,7 @@ trait BinaryMethodDecoder(using Context, ThrowOrWarn):
     val explicitByNameArgs =
       collectLiftedTrees(decodedClass, method) { case arg: ByNameArg if arg.isInline => arg }
         .collect {
-          case arg if matchReturnType(arg.tpe, method.returnType) && matchCapture(arg.capture, method.parameters) =>
+          case arg if matchReturnType(arg.tpe, method.returnType) && matchCapture(arg, method.parameters) =>
             wrapIfInline(arg, DecodedMethod.ByNameArg(decodedClass, arg.owner, arg.tree, arg.tpe.asInstanceOf))
         }
     val inlineOverrides =
@@ -550,7 +550,7 @@ trait BinaryMethodDecoder(using Context, ThrowOrWarn):
       // a super arg takes the same parameters as its constructor
       val sourceParams = extractSourceParams(method, primaryConstructor.declaredType)
       val binaryParams = splitBinaryParams(method, sourceParams)
-      matchReturnType(liftedArg.tpe, method.returnType) && matchCapture(liftedArg.capture, binaryParams.capturedParams)
+      matchReturnType(liftedArg.tpe, method.returnType) && matchCapture(liftedArg, binaryParams.capturedParams)
     collectLiftedTrees(decodedClass, method) { case arg: ConstructorArg => arg }
       .collect {
         case liftedArg if matchSuperArg(liftedArg) =>
@@ -648,8 +648,10 @@ trait BinaryMethodDecoder(using Context, ThrowOrWarn):
 
   private def wrapIfInline(liftedTree: LiftedTree[?], decodedMethod: DecodedMethod): DecodedMethod =
     liftedTree match
-      case InlinedFromDef(liftedTree, inlineCall) =>
-        DecodedMethod.InlinedMethod(wrapIfInline(liftedTree, decodedMethod), inlineCall.callTree)
+      case InlinedFromDef(underlying, inlineCall) =>
+        DecodedMethod.InlinedMethod(wrapIfInline(underlying, decodedMethod), inlineCall.callTree)
+      case InlinedFromArg(underlying, params, inlineArgs) =>
+        DecodedMethod.InlinedMethodFromArg(wrapIfInline(underlying, decodedMethod), params.map(_ -> inlineArgs).toMap)
       case _ => decodedMethod
 
   private def matchLiftedFunSignature(method: binary.Method, tree: LiftedTree[TermSymbol]): Boolean =
@@ -665,7 +667,7 @@ trait BinaryMethodDecoder(using Context, ThrowOrWarn):
         .corresponds(binaryParams.regularParams)((tpe, javaParam) => matchArgType(tpe, javaParam.`type`, false)) &&
         matchReturnType(sourceParams.returnType, binaryParams.returnType)
 
-    matchParamNames && matchTypeErasure && matchCapture(tree.capture, binaryParams.capturedParams)
+    matchParamNames && matchTypeErasure && matchCapture(tree, binaryParams.capturedParams)
   end matchLiftedFunSignature
 
   private def matchReturnType(scalaType: TermType, javaType: Option[binary.Type]): Boolean =
@@ -727,7 +729,7 @@ trait BinaryMethodDecoder(using Context, ThrowOrWarn):
   ):
     def regularParams = declaredParams ++ expandedParams
 
-  private def matchCapture(capture: Seq[String], capturedParams: Seq[binary.Parameter]): Boolean =
+  private def matchCapture(liftedTree: LiftedTree[?], capturedParams: Seq[binary.Parameter]): Boolean =
     val anonymousPattern = "\\$\\d+".r
     val evidencePattern = "evidence\\$\\d+".r
     def toPattern(variable: String): Regex =
@@ -737,7 +739,7 @@ trait BinaryMethodDecoder(using Context, ThrowOrWarn):
         case _ =>
           val encoded = NameTransformer.encode(variable)
           s"${Regex.quote(encoded)}(\\$$tailLocal\\d+)?(\\$$lzy\\d+)?\\$$\\d+".r
-    val patterns = capture.map(toPattern)
+    val patterns = liftedTree.capture(scoper).map(toPattern)
     def isCapture(param: String) =
       patterns.exists(_.unapplySeq(param).nonEmpty)
     def isProxy(param: String) = "(.+)\\$proxy\\d+\\$\\d+".r.unapplySeq(param).nonEmpty

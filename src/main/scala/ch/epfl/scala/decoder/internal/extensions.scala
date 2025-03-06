@@ -62,8 +62,10 @@ extension (symbol: TermSymbol)
     overridingSymbolInLinearization(siteClass) == symbol
   def isConstructor =
     symbol.owner.isClass && symbol.isMethod && symbol.name == nme.Constructor
+  def isParam =
+    symbol.owner.isTerm && symbol.owner.asTerm.paramSymbols.contains(symbol)
   def isParamInInlineMethod =
-    symbol.owner.isInline && symbol.owner.asTerm.paramSymbols.contains(symbol)
+    symbol.owner.isInline && symbol.isParam
 
   def paramSymbols: List[TermSymbol] =
     symbol.paramSymss.collect { case Left(termSyms) => termSyms }.flatten
@@ -196,22 +198,22 @@ extension (tree: Apply)
       tree match
         case tree: Apply => rec(tree.fun)
         case tree: TypeApply => rec(tree.fun)
-        case tree: TermReferenceTree => tree.safeSymbol.collect { case sym: TermSymbol => sym }
+        case tree: TermReferenceTree => tree.safeTermSymbol
         case _ => None
     rec(tree)
 
 extension (tree: TermReferenceTree)
-  def safeSymbol(using Context, ThrowOrWarn): Option[PackageSymbol | TermSymbol] =
-    tryOrNone(tree.symbol)
+  def safeTermSymbol(using Context, ThrowOrWarn): Option[TermSymbol] =
+    tryOrNone(tree.symbol).collect { case sym: TermSymbol => sym }
 
 extension (tree: TermTree)
   def safeTpe(using Context, ThrowOrWarn): Option[TermType] =
     tryOrNone(tree.tpe)
 
-  def lambdaDef(using Context): Option[Tree] =
+  def asLambda(using Context): Option[TermSymbol] =
     tree match
-      case Block(_, expr) => expr.lambdaDef
-      case Lambda(meth, _) => meth.symbol.tree
+      case Block(_, expr) => expr.asLambda
+      case Lambda(meth, _) => Some(meth.symbol.asTerm)
       case _ => None
 
 extension (pos: SourcePosition)

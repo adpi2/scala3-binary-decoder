@@ -14,8 +14,8 @@ class BinaryDecoderStats extends BinaryDecoderSuite:
     decoder.assertDecodeAll(
       expectedClasses = ExpectedCount(4426),
       expectedMethods = ExpectedCount(68421, ambiguous = 25, notFound = 33),
-      expectedFields = ExpectedCount(12549, ambiguous = 26, notFound = 1),
-      expectedVariables = ExpectedCount(142977, ambiguous = 2002, notFound = 435)
+      expectedFields = ExpectedCount(12552, ambiguous = 23, notFound = 1),
+      expectedVariables = ExpectedCount(143180, ambiguous = 1885, notFound = 350)
       // classFilter = Set("dotty.tools.dotc.util.HashSet")
     )
 

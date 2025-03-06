@@ -61,10 +61,9 @@ class LiftedTreeCollector private (root: Symbol)(using Context, ThrowOrWarn):
             val liftedTrees = inlinedTrees.getOrElseUpdate(inlineCall.symbol, collectInlineDef(inlineCall.symbol))
             buffer ++= liftedTrees.map(InlinedFromDef(_, inlineCall))
             buffer ++= inlineCall.args.flatMap { arg =>
-              extractLambda(arg) match
+              arg.asLambda match
                 case Some(lambda) =>
-                  val params = lambda.meth.symbol.asTerm.paramSymbols
-                  collect(arg).map(InlinedFromArg(_, params, inlineCall.args))
+                  collect(arg).map(InlinedFromArg(_, lambda.paramSymbols, inlineCall.args))
                 case None => collect(arg)
             }
             super.traverse(inlineCall.termRefTree)
@@ -80,12 +79,6 @@ class LiftedTreeCollector private (root: Symbol)(using Context, ThrowOrWarn):
   private def collectInlineDef(symbol: TermSymbol): Seq[LiftedTree[?]] =
     inlinedTrees(symbol) = Seq.empty // break recursion
     symbol.tree.flatMap(extractRHS).toSeq.flatMap(collect)
-
-  private def extractLambda(tree: StatementTree): Option[Lambda] =
-    tree match
-      case lambda: Lambda => Some(lambda)
-      case block: Block => extractLambda(block.expr)
-      case _ => None
 
   private def extractRHS(tree: DefTree): Option[TermTree] =
     tree match

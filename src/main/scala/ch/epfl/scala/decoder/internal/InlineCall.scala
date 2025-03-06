@@ -34,7 +34,7 @@ object InlineCall:
   def unapply(fullTree: Tree)(using Context, ThrowOrWarn): Option[InlineCall] =
     def rec(tree: Tree, typeArgsAcc: List[Type], argsAcc: Seq[TermTree]): Option[InlineCall] =
       tree match
-        case termTree: TermReferenceTree if termTree.safeSymbol.exists(sym => sym.isInline && sym.asTerm.isMethod) =>
+        case termTree: TermReferenceTree if termTree.safeTermSymbol.exists(sym => sym.isInline && sym.isMethod) =>
           Some(InlineCall(termTree, typeArgsAcc, argsAcc, fullTree))
         case Apply(fun, args) => rec(fun, typeArgsAcc, args ++ argsAcc)
         case TypeApply(fun, typeArgs) => rec(fun, typeArgs.map(_.toType) ++ typeArgsAcc, argsAcc)

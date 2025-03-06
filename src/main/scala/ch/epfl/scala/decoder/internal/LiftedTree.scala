@@ -17,22 +17,20 @@ sealed trait LiftedTree[S]:
   def owner: Symbol
 
   def inlinedFrom: List[InlineCall] = Nil
-  def inlinedArgs: Map[Symbol, Seq[TermTree]] = Map.empty
+  def inlinedArgsByParam: Map[TermSymbol, Seq[TermTree]] = Map.empty
   def scope(scoper: Scoper): Scope = scoper.getScope(tree)
   def positions(scoper: Scoper): Seq[SourcePosition] = scope(scoper).allPositions.toSeq
-  def capture(using Context, ThrowOrWarn): Seq[String] = LiftedTree.collectCapture(this)
+  def capture(scoper: Scoper): Seq[String] = scope(scoper).capturedVariables.toSeq.map(_.nameStr)
 end LiftedTree
 
-sealed trait LocalTermDef extends LiftedTree[TermSymbol]:
-  def symbol: TermSymbol
+sealed trait LocalTermDef(val symbol: TermSymbol) extends LiftedTree[TermSymbol]:
   def tpe: TypeOrMethodic = symbol.declaredType
+  override def scope(scoper: Scoper): Scope = scoper.getScope(symbol)
 
-final case class LocalDef(tree: DefDef) extends LocalTermDef:
-  def symbol: TermSymbol = tree.symbol
+final case class LocalDef(tree: DefDef) extends LocalTermDef(tree.symbol):
   def owner: Symbol = tree.symbol.owner
 
-final case class LocalLazyVal(tree: ValDef) extends LocalTermDef:
-  def symbol: TermSymbol = tree.symbol
+final case class LocalLazyVal(tree: ValDef) extends LocalTermDef(tree.symbol):
   def owner: Symbol = tree.symbol.owner
 
 final case class LambdaTree(lambda: Lambda)(using Context) extends LiftedTree[(TermSymbol, ClassSymbol)]:
@@ -72,10 +70,11 @@ final case class InlinedFromDef[S](underlying: LiftedTree[S], inlineCall: Inline
   def owner: Symbol = underlying.owner
   def tpe: TermType = inlineCall.substTypeParams(underlying.tpe)
 
-  override def scope(scoper: Scoper): Scope = scoper.inlinedScope(underlying.scope(scoper), inlineCall)
+  override def scope(scoper: Scoper): Scope =
+    scoper.inlinedScope(underlying.scope(scoper), inlineCall)
 
   override def inlinedFrom: List[InlineCall] = inlineCall :: underlying.inlinedFrom
-  override def inlinedArgs: Map[Symbol, Seq[TermTree]] = underlying.inlinedArgs
+  override def inlinedArgsByParam: Map[TermSymbol, Seq[TermTree]] = underlying.inlinedArgsByParam
 
 /**
  * A lambda in an inline lambda can capture a val passed as argument to the inline call
@@ -93,53 +92,8 @@ final case class InlinedFromArg[S](underlying: LiftedTree[S], params: Seq[TermSy
   def symbol: S = underlying.symbol
   def owner: Symbol = underlying.owner
   def tpe: TermType = underlying.tpe
+
+  override def scope(scoper: Scoper): Scope = scoper.inlinedFromLambdaArg(underlying.scope(scoper), inlinedArgsByParam)
   override def inlinedFrom: List[InlineCall] = underlying.inlinedFrom
-  override def inlinedArgs: Map[Symbol, Seq[TermTree]] = underlying.inlinedArgs ++ params.map(_ -> inlineArgs)
-
-object LiftedTree:
-  def collectCapture(liftedTree: LiftedTree[?])(using Context, ThrowOrWarn): Seq[String] =
-    val capture = mutable.Set.empty[String]
-    val alreadySeen = mutable.Set.empty[Symbol]
-
-    def loopCollect(symbol: Symbol)(collect: => Unit): Unit =
-      if !alreadySeen.contains(symbol) then
-        alreadySeen += symbol
-        collect
-
-    class Traverser(inlinedFrom: List[InlineCall], inlinedArgs: Map[Symbol, Seq[TermTree]])(using Context)
-        extends TreeTraverser:
-      private val inlineMapping: Map[Symbol, TermTree] = inlinedFrom.headOption.toSeq.flatMap(_.paramsMap).toMap
-      override def traverse(tree: Tree): Unit =
-        tree match
-          case tree: TermReferenceTree =>
-            for symbol <- tree.safeSymbol do
-              for arg <- inlineMapping.get(symbol) do
-                loopCollect(symbol)(Traverser(inlinedFrom.tail, inlinedArgs).traverse(arg))
-              for args <- inlinedArgs.get(symbol) do loopCollect(symbol)(args.foreach(traverse))
-          case _ => ()
-
-        tree match
-          case _: TypeTree => ()
-          case ident: Ident =>
-            for sym <- ident.safeSymbol.collect { case sym: TermSymbol => sym } do
-              capture += sym.nameStr
-              if sym.isLocal then
-                if sym.isMethod || sym.isLazyVal then loopCollect(sym)(sym.tree.foreach(traverse))
-                else if sym.isModuleVal then loopCollect(sym)(sym.moduleClass.flatMap(_.tree).foreach(traverse))
-          case _ => super.traverse(tree)
-    end Traverser
-
-    val traverser = Traverser(liftedTree.inlinedFrom, liftedTree.inlinedArgs)
-    def traverse(tree: LiftedTree[?]): Unit =
-      tree match
-        case term: LocalTermDef if term.symbol.isModuleVal =>
-          loopCollect(term.symbol)(term.symbol.moduleClass.flatMap(_.tree).foreach(traverser.traverse))
-        case term: LocalTermDef =>
-          loopCollect(term.symbol)(traverser.traverse(term.tree))
-        case lambda: LambdaTree => loopCollect(lambda.symbol(0))(lambda.tree)
-        case InlinedFromDef(underlying, inlineCall) => traverse(underlying)
-        case InlinedFromArg(underlying, params, inlineArgs) => traverse(underlying)
-        case tree => traverser.traverse(tree.tree)
-    traverse(liftedTree)
-    capture.toSeq
-  end collectCapture
+  override def inlinedArgsByParam: Map[TermSymbol, Seq[TermTree]] =
+    underlying.inlinedArgsByParam ++ params.map(_ -> inlineArgs)

@@ -64,10 +64,11 @@ class VariableCollector(scoper: Scoper)(using Context, ThrowOrWarn) extends Tree
             }
             inlineCall.args.foreach(traverse)
             // inlined lambdas
-            inlineCall.paramsMap
-              .collect { case (sym, tree) if sym.isInline => tree }
-              .flatMap(_.lambdaDef)
-              .foreach(traverseDef)
+            for
+              inlineParam <- inlineCall.paramsMap.collect { case (sym, tree) if sym.isInline => tree }
+              inlinedLambda <- inlineParam.asLambda
+              lambdaTree <- inlinedLambda.tree
+            do traverseDef(lambdaTree)
           case tree: (Block | CaseDef | Inlined) => scoped(tree)(super.traverse(tree))
           case _ => super.traverse(tree)
 

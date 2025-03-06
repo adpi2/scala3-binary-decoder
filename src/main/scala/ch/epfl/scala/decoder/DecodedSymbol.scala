@@ -3,7 +3,7 @@ package ch.epfl.scala.decoder
 import ch.epfl.scala.decoder.internal.showBasic
 import tastyquery.SourcePosition
 import tastyquery.Symbols.*
-import tastyquery.Trees.Tree
+import tastyquery.Trees.*
 import tastyquery.Types.*
 
 sealed trait DecodedSymbol:
@@ -161,6 +161,17 @@ object DecodedMethod:
     override def toString: String =
       if underlying.isInstanceOf[InlinedMethod] then underlying.toString
       else s"$underlying (inlined)"
+
+  final class InlinedMethodFromArg(
+      val underlying: DecodedMethod,
+      val inlinedArgsByParam: Map[TermSymbol, Seq[TermTree]]
+  ) extends DecodedMethod:
+    override def owner: DecodedClass = underlying.owner
+    override def declaredType: TypeOrMethodic = underlying.declaredType
+    override def symbolOpt: Option[TermSymbol] = underlying.symbolOpt
+    override def toString: String =
+      if underlying.isInstanceOf[InlinedMethodFromArg] then underlying.toString
+      else s"$underlying (inlined from arg)"
 
 sealed trait DecodedField extends DecodedSymbol:
   def owner: DecodedClass

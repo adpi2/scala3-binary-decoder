@@ -70,10 +70,12 @@ trait BinaryFieldDecoder(using Context, ThrowOrWarn):
       .toSeq
 
   private def decodeCapture(decodedClass: DecodedClass, names: Seq[String]): Seq[DecodedField] =
-    decodedClass.treeOpt.toSeq
-      .flatMap(CaptureCollector.collectCaptures)
-      .filter(captureSym => names.contains(captureSym.nameStr))
-      .map(DecodedField.Capture(decodedClass, _))
+    for
+      clsSym <- decodedClass.symbolOpt.toSeq
+      scope = scoper.getScope(clsSym)
+      capturedSym <- scope.capturedVariables
+      if names.contains(capturedSym.nameStr)
+    yield DecodedField.Capture(decodedClass, capturedSym)
 
   private def withCompanionIfExtendsJavaLangEnum(decodedClass: DecodedClass): Seq[ClassSymbol] =
     decodedClass.classSymbol.toSeq.flatMap { cls =>

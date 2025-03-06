@@ -71,10 +71,20 @@ trait BinaryVariableDecoder(using Context, ThrowOrWarn):
       name: String
   ): Seq[DecodedVariable.CapturedVariable] =
     for
-      metTree <- decodedMethod.treeOpt.toSeq
-      sym <- CaptureCollector.collectCaptures(metTree)
+      scope <- getScope(decodedMethod).toSeq
+      sym <- scope.capturedVariables
       if name == sym.nameStr && matchCaptureType(sym, variable.`type`)
     yield DecodedVariable.CapturedVariable(decodedMethod, sym)
+
+  private def getScope(decodedSym: DecodedSymbol): Option[Scope] =
+    decodedSym.symbolOpt
+      .map(scoper.getScope)
+      .orElse(decodedSym.treeOpt.map(scoper.getScope))
+      .map: baseScope =>
+        decodedSym match
+          case m: DecodedMethod.InlinedMethodFromArg =>
+            scoper.inlinedFromLambdaArg(baseScope, m.inlinedArgsByParam)
+          case _ => baseScope
 
   private def decodeParameter(decodedMethod: DecodedMethod, variable: binary.Variable): Seq[DecodedVariable] =
     (decodedMethod, variable) match
@@ -173,8 +183,8 @@ trait BinaryVariableDecoder(using Context, ThrowOrWarn):
       variable: binary.Variable,
       name: String
   ): Seq[DecodedVariable] =
-    decodedMethod.owner.treeOpt.toSeq
-      .flatMap(CaptureCollector.collectCaptures)
+    getScope(decodedMethod.owner).toSeq
+      .flatMap(_.capturedVariables)
       .filter(sym => name == sym.nameStr && matchCaptureType(sym, variable.`type`))
       .map(DecodedVariable.CapturedVariable(decodedMethod, _))
 
